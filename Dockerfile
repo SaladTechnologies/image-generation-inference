@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install --no-install-recommends --no-install-sugge
   libglib2.0-0 \
   build-essential \
   libgoogle-perftools-dev \
-  wget
+  wget \
+  jq
 
 # We need the latest pip
 RUN pip install --upgrade --no-cache-dir pip
@@ -24,11 +25,15 @@ ENV TORCH_CUDA_ARCH_LIST=All
 ENV MAX_JOBS=4
 ENV LD_PRELOAD=libtcmalloc.so
 RUN pip install --upgrade --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121
-RUN pip install -v -U git+https://github.com/chengzeyi/stable-fast.git@v0.0.15#egg=stable-fast
+RUN WITH_CUDA=0 pip install -v -U git+https://github.com/chengzeyi/stable-fast.git@v0.0.15#egg=stable-fast
 
 COPY ./app ./
 
-ENV HOST='[::]'
+ENV HOST='*'
 ENV PORT=1234
 
-CMD ["python", "main.py"]
+RUN wget https://raw.githubusercontent.com/SaladTechnologies/stable-diffusion-configurator/main/configure && chmod +x configure
+
+COPY entrypoint.sh /entrypoint.sh
+
+CMD ["/entrypoint.sh"]
