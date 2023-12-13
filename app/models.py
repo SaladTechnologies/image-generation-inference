@@ -94,11 +94,13 @@ def load_checkpoint(model_name: str):
 
 class ModelManager:
     __pipes__ = {}
+    __schedulers__ = {}
 
-    def __init__(self, model_name):
+    def __init__(self, model_name: str):
         self.model_name = model_name
         pipe = load_checkpoint(model_name)
         pipe_type = pipe.__class__.__name__
+        self.default_pipeline = pipe_type
         print(f"Compiling {model_name} ({pipe_type})", flush=True)
         start = time.perf_counter()
         pipe.to("cuda")
@@ -117,22 +119,108 @@ class ModelManager:
         print(f"Warmed up {model_name} in {end - start:.2f}s", flush=True)
         self.__pipes__[pipe_type] = pipe
 
-    def get_pipeline(self, pipeline_type):
+    def get_pipeline(self, pipeline_type: str = None):
+        if pipeline_type is None:
+            pipeline_type = self.default_pipeline
         if pipeline_type not in self.__pipes__:
             try:
                 PipeClass = getattr(diffusers, pipeline_type)
             except AttributeError:
                 raise Exception(f"Unknown pipeline type {pipeline_type}")
-            if "StableDiffusionPipeline" in self.__pipes__:
-                pipe = PipeClass(**self.__pipes__["StableDiffusionPipeline"].components)
-            elif "StableDiffusionXLPipeline" in self.__pipes__:
-                pipe = PipeClass(
-                    **self.__pipes__["StableDiffusionXLPipeline"].components
-                )
-            else:
-                raise Exception("Unable to find a valid base pipeline")
+            pipe = PipeClass(**self.__pipes__[self.default_pipeline].components)
             self.__pipes__[pipeline_type] = pipe
         return self.__pipes__[pipeline_type]
+
+    def get_scheduler(
+        self, scheduler: str = None, scheduler_config: dict = {}, alias: str = None
+    ):
+        default_scheduler = self.__pipes__[self.default_pipeline].scheduler
+        if scheduler is None:
+            return default_scheduler
+        if alias is None:
+            alias = scheduler
+        if alias not in self.__schedulers__:
+            SchedulerClass = getattr(diffusers, scheduler)
+            scheduler = SchedulerClass.from_config(
+                default_scheduler.config, **scheduler_config
+            )
+            self.__schedulers__[alias] = scheduler
+        return self.__schedulers__[alias]
+
+    def get_compatible_schedulers(self, pipeline_type: str):
+        pipe = self.get_pipeline(pipeline_type)
+        return pipe.scheduler._compatibles
+
+    def get_a1111_scheduler(self, a1111_alias: str):
+        mapping = {
+            "DPM++ 2M": {"class": "DPMSolverMultistepScheduler", "config": {}},
+            "DPM++ 2M Karras": {
+                "class": "DPMSolverMultistepScheduler",
+                "config": {"use_karras_sigmas": True},
+            },
+            "DPM++ 2M SDE": {
+                "class": "DPMSolverMultistepScheduler",
+                "config": {"algorithm_type": "sde-dpmsolver++"},
+            },
+            "DPM++ 2M SDE Karras": {
+                "class": "DPMSolverMultistepScheduler",
+                "config": {
+                    "algorithm_type": "sde-dpmsolver++",
+                    "use_karras_sigmas": True,
+                },
+            },
+            "DPM++ SDE": {"class": "	DPMSolverSinglestepScheduler", "config": {}},
+            "DPM++ SDE Karras": {
+                "class": "DPMSolverSinglestepScheduler",
+                "config": {"use_karras_sigmas": True},
+            },
+            "DPM2": {
+                "class": "KDPM2DiscreteScheduler",
+                "config": {},
+            },
+            "DPM2 Karras": {
+                "class": "KDPM2DiscreteScheduler",
+                "config": {"use_karras_sigmas": True},
+            },
+            "DPM2 a": {
+                "class": "KDPM2AncestralDiscreteScheduler",
+                "config": {},
+            },
+            "DPM2 a Karras": {
+                "class": "KDPM2AncestralDiscreteScheduler",
+                "config": {"use_karras_sigmas": True},
+            },
+            "Euler": {
+                "class": "EulerDiscreteScheduler",
+                "config": {},
+            },
+            "Euler a": {
+                "class": "EulerAncestralDiscreteScheduler",
+                "config": {},
+            },
+            "Heun": {
+                "class": "HeunDiscreteScheduler",
+                "config": {},
+            },
+            "LMS": {
+                "class": "LMSDiscreteScheduler",
+                "config": {},
+            },
+            "LMS Karras": {
+                "class": "LMSDiscreteScheduler",
+                "config": {"use_karras_sigmas": True},
+            },
+        }
+
+        if a1111_alias not in mapping:
+            raise Exception(
+                f"Unknown A1111 alias {a1111_alias}. Use one of {list(mapping.keys())}"
+            )
+
+        scheduler = self.get_scheduler(
+            mapping[a1111_alias]["class"], mapping[a1111_alias]["config"], a1111_alias
+        )
+        return scheduler
 
 
 def get_checkpoint(model_name: str):

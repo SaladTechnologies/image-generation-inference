@@ -16,3 +16,4 @@ services:
               capabilities: [ gpu ]
     environment:
       CIVITAI_MODEL_VERSION_IDS: 128713
+      LAUNCH_CHECKPOINT: dreamshaper_8.safetensors

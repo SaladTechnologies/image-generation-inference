@@ -1,5 +1,6 @@
 import time
 import os
+import torch
 from fastapi import FastAPI, Request, Response
 from pydantic import BaseModel
 from typing import Optional, Union, List, Tuple
@@ -14,6 +15,11 @@ from __version__ import VERSION
 
 host = os.getenv("HOST", "*")
 port = int(os.getenv("PORT", "1234"))
+
+launch_ckpt = os.getenv("LAUNCH_CHECKPOINT", None)
+if launch_ckpt is not None:
+    print(f"Preloading checkpoint {launch_ckpt}")
+    get_checkpoint(launch_ckpt)
 
 app = FastAPI()
 
@@ -64,6 +70,7 @@ class StableDiffusionXLPipelineParams(BaseModel):
 class GenerateParams(BaseModel):
     checkpoint: str
     pipeline: Optional[PipelineOptions] = PipelineOptions.StableDiffusionPipeline
+    scheduler: Optional[str] = None
     parameters: Union[StableDiffusionPipelineParams, StableDiffusionXLPipelineParams]
     return_images: Optional[bool] = True
 
@@ -87,11 +94,39 @@ async def generate(params: GenerateParams):
             media_type="application/json",
         )
     pipe_loaded = time.perf_counter()
+
+    # Check if the scheduler is compatible with the pipeline
+    compatible_schedulers = model.get_compatible_schedulers(params.pipeline.value)
+    if params.scheduler is not None and params.scheduler not in compatible_schedulers:
+        return Response(
+            json.dumps(
+                {
+                    "error": f"Scheduler {params.scheduler} is not compatible with pipeline {params.pipeline}. Compatible schedulers are {compatible_schedulers}"
+                }
+            ),
+            status_code=400,
+            media_type="application/json",
+        )
+    elif params.scheduler is not None:
+        pipe.scheduler = model.get_scheduler(params.scheduler)
+
+    gen_params = {
+        k: v for k, v in params.parameters.model_dump().items() if v is not None
+    }
+
+    # We need to convert seed to torch generators
+    if "seed" in gen_params:
+        if not isinstance(gen_params["seed"], list):
+            generator = torch.Generator(device="cuda").manual_seed(gen_params["seed"])
+        else:
+            generator = [
+                torch.Generator(device="cuda").manual_seed(s)
+                for s in gen_params["seed"]
+            ]
+        gen_params["generator"] = generator
+        del gen_params["seed"]
+
     try:
-        gen_params = {
-            k: v for k, v in params.parameters.model_dump().items() if v is not None
-        }
-        print(gen_params)
         images = pipe(**gen_params).images
         stop = time.perf_counter()
         print(f"Generated {len(images)} images in {stop - pipe_loaded} seconds")
@@ -101,7 +136,7 @@ async def generate(params: GenerateParams):
         b64_stop = time.perf_counter()
         return {
             "images": images,
-            "parameters": gen_params,
+            "inputs": params.model_dump(),
             "meta": {
                 "model_load_time": pipe_loaded - start,
                 "generation_time": stop - pipe_loaded,
