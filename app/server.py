@@ -1,14 +1,20 @@
 import time
 import os
 import torch
-from fastapi import FastAPI, Request, Response
-from pydantic import BaseModel
-from typing import Optional, Union, List, Tuple
+from fastapi import FastAPI, Response, Depends
 import json
 import uvicorn
 import io
-from models import get_checkpoint
-from enum import Enum
+from models import (
+    get_checkpoint,
+    list_local_checkpoints,
+    list_local_controlnet,
+    list_local_lora,
+    list_local_vae,
+    list_loaded_checkpoints,
+)
+from schemas import GenerateParams, ModelListFilters
+
 import base64
 from PIL import Image
 from __version__ import VERSION
@@ -27,53 +33,6 @@ app = FastAPI()
 @app.get("/hc")
 async def health_check():
     return {"status": "ok", "version": VERSION}
-
-
-class PipelineOptions(Enum):
-    StableDiffusionPipeline = "StableDiffusionPipeline"
-    StableDiffusionXLPipeline = "StableDiffusionXLPipeline"
-
-
-class StableDiffusionPipelineParams(BaseModel):
-    prompt: Union[str, List[str]]
-    height: Optional[int] = None
-    width: Optional[int] = None
-    num_inference_steps: Optional[int] = 15
-    guidance_scale: Optional[float] = None
-    negative_prompt: Optional[Union[str, List[str]]] = None
-    num_images_per_prompt: Optional[int] = None
-    eta: Optional[float] = None
-    seed: Optional[Union[int, List[int]]] = None
-
-
-class StableDiffusionXLPipelineParams(BaseModel):
-    prompt: Union[str, List[str]]
-    prompt_2: Optional[Union[str, List[str]]] = None
-    height: Optional[int] = None
-    width: Optional[int] = None
-    num_inference_steps: Optional[int] = 15
-    denoising_end: Optional[float] = None
-    guidance_scale: Optional[float] = None
-    negative_prompt: Optional[Union[str, List[str]]] = None
-    negative_prompt_2: Optional[Union[str, List[str]]] = None
-    num_images_per_prompt: Optional[int] = None
-    eta: Optional[float] = None
-    seed: Optional[Union[int, List[int]]] = None
-    original_size: Optional[Tuple[int, int]] = None
-    target_size: Optional[Tuple[int, int]] = None
-    crops_coords_top_left: Optional[Tuple[int, int]] = None
-    negative_original_size: Optional[Tuple[int, int]] = None
-    negative_crops_coords_top_left: Optional[Tuple[int, int]] = None
-    negative_target_size: Optional[Tuple[int, int]] = None
-
-
-class GenerateParams(BaseModel):
-    checkpoint: str
-    pipeline: Optional[PipelineOptions] = PipelineOptions.StableDiffusionPipeline
-    scheduler: Optional[str] = None
-    a1111_scheduler: Optional[str] = None
-    parameters: Union[StableDiffusionPipelineParams, StableDiffusionXLPipelineParams]
-    return_images: Optional[bool] = True
 
 
 def pil_to_b64(image: Image):
@@ -154,6 +113,28 @@ async def generate(params: GenerateParams):
             status_code=500,
             media_type="application/json",
         )
+
+
+@app.get("/checkpoints")
+def list_checkpoints(params: ModelListFilters = Depends()):
+    if params.loaded:
+        return list_loaded_checkpoints()
+    return list_local_checkpoints()
+
+
+@app.get("/controlnet")
+def list_controlnet():
+    return list_local_controlnet()
+
+
+@app.get("/lora")
+def list_lora():
+    return list_local_lora()
+
+
+@app.get("/vae")
+def list_vae():
+    return list_local_vae()
 
 
 if __name__ == "__main__":

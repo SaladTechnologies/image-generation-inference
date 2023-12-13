@@ -10,7 +10,6 @@ from sfast.compilers.stable_diffusion_pipeline_compiler import (
     CompilationConfig,
 )
 import huggingface_hub
-from safetensors import safe_open
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
@@ -236,3 +235,23 @@ def get_checkpoint(model_name: str):
         loaded_checkpoints[model_name] = ModelManager(model_name)
 
     return loaded_checkpoints[model_name]
+
+
+def list_local_checkpoints():
+    return os.listdir(checkpoint_dir)
+
+
+def list_local_vae():
+    return os.listdir(vae_dir)
+
+
+def list_local_lora():
+    return os.listdir(lora_dir)
+
+
+def list_local_controlnet():
+    return os.listdir(controlnet_dir)
+
+
+def list_loaded_checkpoints():
+    return list(loaded_checkpoints.keys())
