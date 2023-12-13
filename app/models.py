@@ -114,7 +114,7 @@ class ModelManager:
         print(f"Compiled {model_name} in {end - start:.2f}s", flush=True)
         print(f"Warming up {model_name}", flush=True)
         start = time.perf_counter()
-        pipe(prompt="Leafy Green Salad", num_inference_steps=2)
+        pipe(prompt="Leafy Green Salad", num_inference_steps=1)
         end = time.perf_counter()
         print(f"Warmed up {model_name} in {end - start:.2f}s", flush=True)
         self.__pipes__[pipe_type] = pipe

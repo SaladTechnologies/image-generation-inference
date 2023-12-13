@@ -18,7 +18,7 @@ port = int(os.getenv("PORT", "1234"))
 
 launch_ckpt = os.getenv("LAUNCH_CHECKPOINT", None)
 if launch_ckpt is not None:
-    print(f"Preloading checkpoint {launch_ckpt}")
+    print(f"Preloading checkpoint {launch_ckpt}", flush=True)
     get_checkpoint(launch_ckpt)
 
 app = FastAPI()
@@ -71,6 +71,7 @@ class GenerateParams(BaseModel):
     checkpoint: str
     pipeline: Optional[PipelineOptions] = PipelineOptions.StableDiffusionPipeline
     scheduler: Optional[str] = None
+    a1111_scheduler: Optional[str] = None
     parameters: Union[StableDiffusionPipelineParams, StableDiffusionXLPipelineParams]
     return_images: Optional[bool] = True
 
@@ -109,6 +110,8 @@ async def generate(params: GenerateParams):
         )
     elif params.scheduler is not None:
         pipe.scheduler = model.get_scheduler(params.scheduler)
+    elif params.a1111_scheduler is not None:
+        pipe.scheduler = model.get_a1111_scheduler(params.a1111_scheduler)
 
     gen_params = {
         k: v for k, v in params.parameters.model_dump().items() if v is not None
