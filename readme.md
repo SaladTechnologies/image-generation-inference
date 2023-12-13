@@ -1,6 +1,6 @@
 # 🥗 Image Generation Inference
 
-This is a minimalist iamge generation inference server wrapping Diffusers and stable-fast.
+This is a minimalist image generation inference server wrapping Diffusers and stable-fast.
 
 API docs at `/docs`
 
