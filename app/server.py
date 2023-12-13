@@ -12,8 +12,9 @@ from models import (
     list_local_lora,
     list_local_vae,
     list_loaded_checkpoints,
+    unload_checkpoint,
 )
-from schemas import GenerateParams, ModelListFilters
+from schemas import GenerateParams, ModelListFilters, UnloadCheckpointParams
 
 import base64
 from PIL import Image
@@ -113,6 +114,12 @@ async def generate(params: GenerateParams):
             status_code=500,
             media_type="application/json",
         )
+
+
+@app.post("/unload")
+async def unload(params: UnloadCheckpointParams):
+    unload_checkpoint(params.checkpoint)
+    return {"status": "ok"}
 
 
 @app.get("/checkpoints")

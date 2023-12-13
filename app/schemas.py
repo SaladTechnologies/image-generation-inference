@@ -52,3 +52,7 @@ class GenerateParams(BaseModel):
 
 class ModelListFilters(BaseModel):
     loaded: Optional[bool] = False
+
+
+class UnloadCheckpointParams(BaseModel):
+    checkpoint: str

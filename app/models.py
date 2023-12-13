@@ -10,6 +10,7 @@ from sfast.compilers.stable_diffusion_pipeline_compiler import (
     CompilationConfig,
 )
 import huggingface_hub
+import gc
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
@@ -221,6 +222,34 @@ class ModelManager:
         )
         return scheduler
 
+    def purge(self):
+        for pipe in self.__pipes__.values():
+            del pipe.vae
+            del pipe.text_encoder
+            del pipe.tokenizer
+            del pipe.unet
+            del pipe.scheduler
+            if hasattr(pipe, "text_encoder_2"):
+                del pipe.text_encoder_2
+            if hasattr(pipe, "tokenizer_2"):
+                del pipe.tokenizer_2
+            if hasattr(pipe, "safety_checker"):
+                del pipe.safety_checker
+            if hasattr(pipe, "feature_extractor"):
+                del pipe.feature_extractor
+            if hasattr(pipe, "controlnet"):
+                del pipe.controlnet
+            print(
+                [attribute for attribute in dir(pipe) if not attribute.startswith("_")]
+            )
+
+            del pipe
+        for scheduler in self.__schedulers__.values():
+            del scheduler
+        gc.collect()
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+
 
 def get_checkpoint(model_name: str):
     """_summary_
@@ -255,3 +284,9 @@ def list_local_controlnet():
 
 def list_loaded_checkpoints():
     return list(loaded_checkpoints.keys())
+
+
+def unload_checkpoint(model_name: str):
+    if model_name in loaded_checkpoints:
+        loaded_checkpoints[model_name].purge()
+        del loaded_checkpoints[model_name]

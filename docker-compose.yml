@@ -14,6 +14,6 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [ gpu ]
-    # environment:
-    #   CIVITAI_MODEL_VERSION_IDS: 251662
-    #   LAUNCH_CHECKPOINT: dreamshaperXL_turboDpmppSDE.safetensors
+    environment:
+      #   CIVITAI_MODEL_VERSION_IDS: 251662
+      LAUNCH_CHECKPOINT: dreamshaper_8.safetensors
