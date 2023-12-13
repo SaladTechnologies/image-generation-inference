@@ -8,6 +8,8 @@ API docs at `/docs`
 
 ## Goals
 
+Everything you need and nothing you don't. Server-only, no UI.
+
 The goal here is to support all image generation models supported by Diffusers.
 Additionally:
 - Model swapping
