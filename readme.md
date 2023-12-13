@@ -6,6 +6,15 @@ This is a minimalist image generation inference server wrapping Diffusers and st
 
 API docs at `/docs`
 
+## Goals
+
+The goal here is to support all image generation models supported by Diffusers.
+Additionally:
+- Model swapping
+- Lora-per-request
+- Controlnet-per-request
+- vae swapping
+
 ## Supported Pipelines
 
 ### StableDiffusionPipeline
