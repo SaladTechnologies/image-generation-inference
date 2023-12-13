@@ -1,0 +1,31 @@
+#! /usr/bin/env bash
+
+set -e
+
+# Usage: ./scripts/build [--push]
+
+push=false
+if [[ "$1" == "--push" ]]; then
+  push=true
+fi
+
+PYTHON=$(which python3 || which python)
+VERSION=$($PYTHON -c 'from app.__version__ import VERSION; print(VERSION)')
+
+docker build \
+  -t saladtechnologies/image-generation-inference:latest \
+  -f Dockerfile \
+  --platform linux/amd64 \
+  --output type=docker \
+  --provenance false \
+  .
+
+docker tag saladtechnologies/image-generation-inference:latest saladtechnologies/image-generation-inference:$VERSION
+
+if [[ "$push" == "true" ]]; then
+  echo " Pushing saladtechnologies/image-generation-inference:latest"
+  docker push saladtechnologies/image-generation-inference:latest
+
+  echo " Pushing saladtechnologies/image-generation-inference:$VERSION"
+  docker push saladtechnologies/image-generation-inference:$VERSION
+fi
