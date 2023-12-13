@@ -2,11 +2,14 @@ import time
 import os
 from fastapi import FastAPI, Request, Response
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union, List, Tuple
 import json
 import uvicorn
 import io
 from models import get_checkpoint
+from enum import Enum
+import base64
+from PIL import Image
 from __version__ import VERSION
 
 host = os.getenv("HOST", "*")
@@ -20,23 +23,99 @@ async def health_check():
     return {"status": "ok", "version": VERSION}
 
 
+class PipelineOptions(Enum):
+    StableDiffusionPipeline = "StableDiffusionPipeline"
+    StableDiffusionXLPipeline = "StableDiffusionXLPipeline"
+
+
+class StableDiffusionPipelineParams(BaseModel):
+    prompt: Union[str, List[str]]
+    height: Optional[int] = None
+    width: Optional[int] = None
+    num_inference_steps: Optional[int] = 15
+    guidance_scale: Optional[float] = None
+    negative_prompt: Optional[Union[str, List[str]]] = None
+    num_images_per_prompt: Optional[int] = None
+    eta: Optional[float] = None
+    seed: Optional[Union[int, List[int]]] = None
+
+
+class StableDiffusionXLPipelineParams(BaseModel):
+    prompt: Union[str, List[str]]
+    prompt_2: Optional[Union[str, List[str]]] = None
+    height: Optional[int] = None
+    width: Optional[int] = None
+    num_inference_steps: Optional[int] = 15
+    denoising_end: Optional[float] = None
+    guidance_scale: Optional[float] = None
+    negative_prompt: Optional[Union[str, List[str]]] = None
+    negative_prompt_2: Optional[Union[str, List[str]]] = None
+    num_images_per_prompt: Optional[int] = None
+    eta: Optional[float] = None
+    seed: Optional[Union[int, List[int]]] = None
+    original_size: Optional[Tuple[int, int]] = None
+    target_size: Optional[Tuple[int, int]] = None
+    crops_coords_top_left: Optional[Tuple[int, int]] = None
+    negative_original_size: Optional[Tuple[int, int]] = None
+    negative_crops_coords_top_left: Optional[Tuple[int, int]] = None
+    negative_target_size: Optional[Tuple[int, int]] = None
+
+
 class GenerateParams(BaseModel):
-    prompt: str
     checkpoint: str
+    pipeline: Optional[PipelineOptions] = PipelineOptions.StableDiffusionPipeline
+    parameters: Union[StableDiffusionPipelineParams, StableDiffusionXLPipelineParams]
+    return_images: Optional[bool] = True
+
+
+def pil_to_b64(image: Image):
+    img_byte_arr = io.BytesIO()
+    image.save(img_byte_arr, format="JPEG")
+    return base64.b64encode(img_byte_arr.getvalue()).decode("utf-8")
 
 
 @app.post("/generate")
 async def generate(params: GenerateParams):
     start = time.perf_counter()
-    checkpoint = get_checkpoint(params.checkpoint)
+    model = get_checkpoint(params.checkpoint)
     try:
-        images = checkpoint(params.prompt)
-        stop = time.perf_counter()
-        print(f"Generated {len(images)} images in {stop - start} seconds")
-        print(images)
-        return {"images": images}
+        pipe = model.get_pipeline(params.pipeline.value)
     except Exception as e:
-        return {"error": str(e)}
+        return Response(
+            json.dumps({"error": str(e)}),
+            status_code=500,
+            media_type="application/json",
+        )
+    pipe_loaded = time.perf_counter()
+    try:
+        gen_params = {
+            k: v for k, v in params.parameters.model_dump().items() if v is not None
+        }
+        print(gen_params)
+        images = pipe(**gen_params).images
+        stop = time.perf_counter()
+        print(f"Generated {len(images)} images in {stop - pipe_loaded} seconds")
+        # if we're returning images, then we need to encode them as base64
+        if params.return_images:
+            images = [pil_to_b64(img) for img in images]
+        b64_stop = time.perf_counter()
+        return {
+            "images": images,
+            "parameters": gen_params,
+            "meta": {
+                "model_load_time": pipe_loaded - start,
+                "generation_time": stop - pipe_loaded,
+                "b64_encoding_time": b64_stop - stop,
+                "total_time": b64_stop - start,
+            },
+        }
+    except Exception as e:
+        # Return a 500 if something goes wrong
+        return Response(
+            json.dumps({"error": str(e)}),
+            status_code=500,
+            media_type="application/json",
+        )
 
 
 if __name__ == "__main__":
