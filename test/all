@@ -1,0 +1,7 @@
+#! /usr/bin/env bash
+
+for pipeline in $(ls test/pipelines); do
+    echo "---------------------------------"
+    echo "Generating images for $pipeline" 
+    ./test/generate $pipeline
+done

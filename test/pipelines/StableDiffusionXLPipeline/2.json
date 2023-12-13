@@ -1,0 +1,12 @@
+{
+  "checkpoint": "dreamshaperXL_turboDpmppSDE.safetensors",
+  "pipeline": "StableDiffusionXLPipeline",
+  "a1111_scheduler": "Euler a",
+  "parameters": {
+    "prompt": "a cat",
+    "num_inference_steps": 5,
+    "guidance_scale": 2.0,
+    "width": 512,
+    "height": 512
+  }
+}
