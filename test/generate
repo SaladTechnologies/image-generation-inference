@@ -7,26 +7,40 @@ mkdir -p $outputs_dir
 for file in $fixture_dir/*.json; do
     body=$(cat $file)
     name=$(basename $file .json)
+
+    image_path=$(echo "$body" | jq -r '.parameters.image')
+    if [[ $image_path != "null" ]]; then
+        base64 "$fixture_dir/$image_path" > /tmp/temp_image_base64
+        body=$(jq --rawfile image /tmp/temp_image_base64 '.parameters.image = $image' "$file")
+        echo $body > /tmp/temp.json
+    else
+        cp "$file" /tmp/temp.json
+    fi
+
     
 
     result=$(curl -X POST \
         'http://localhost:1234/generate' \
         --header 'Content-Type: application/json' \
-        --data-raw "$body" \
+        --data-binary @/tmp/temp.json \
         --fail 2>/dev/null
         )
     exit_code=$?
     if [[ $exit_code -ne 0 ]]; then
         echo "----------------------"
         echo "Failed to generate $pipeline/$name.json"
-        echo $body | jq
+        # echo $body | jq
+        curl -X POST \
+        'http://localhost:1234/generate' \
+        --header 'Content-Type: application/json' \
+        --data-binary @/tmp/temp.json
         echo "----------------------"
         continue
     fi
     meta=$(echo $result | jq -r '.meta')
     echo $meta | jq
     for idx in $(echo $result | jq -r '.images | keys | .[]'); do
-        filename=$outputs_dir/$pipeline-$name-$(($idx + 1)).png
+        filename=$outputs_dir/$pipeline-$name-$(($idx + 1)).jpg
         image=$(echo $result | jq -r ".images[$idx]")
         echo $image | base64 -d > $filename
     done

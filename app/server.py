@@ -19,9 +19,13 @@ from schemas import (
     LoadOrUnloadCheckpointParams,
     SystemPerformance,
 )
-from image_utils import pil_to_b64
+from image_utils import pil_to_b64, b64_to_pil
 import config
 from monitoring import get_detailed_system_performance
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 if config.launch_ckpt is not None:
@@ -91,10 +95,16 @@ async def generate(params: GenerateParams):
         gen_params["generator"] = generator
         del gen_params["seed"]
 
-    if params.safety_checker:
+    if "image" in gen_params:
+        if isinstance(gen_params["image"], str):
+            gen_params["image"] = b64_to_pil(gen_params["image"])
+        elif isinstance(gen_params["image"], list):
+            gen_params["image"] = [b64_to_pil(img) for img in gen_params["image"]]
+
+    if params.safety_checker and hasattr(pipe, "safety_checker"):
         pipe.safety_checker = model.get_safety_checker()
         pipe.feature_extractor = model.get_feature_extractor()
-    else:
+    elif hasattr(pipe, "safety_checker"):
         pipe.safety_checker = None
         pipe.feature_extractor = None
 
@@ -117,6 +127,7 @@ async def generate(params: GenerateParams):
             },
         }
     except Exception as e:
+        logging.exception(e)
         # Return a 500 if something goes wrong
         return Response(
             json.dumps({"error": str(e)}),

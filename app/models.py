@@ -86,8 +86,9 @@ class ModelManager:
         pipe = load_checkpoint(model_name)
         pipe_type = pipe.__class__.__name__
         self.default_pipeline = pipe_type
-        self.__safety_checker__ = pipe.safety_checker
-        self.__feature_extractor__ = pipe.feature_extractor
+        if hasattr(pipe, "safety_checker"):
+            self.__safety_checker__ = pipe.safety_checker
+            self.__feature_extractor__ = pipe.feature_extractor
         print(f"Compiling {model_name} ({pipe_type})", flush=True)
         start = time.perf_counter()
         pipe.to("cuda")

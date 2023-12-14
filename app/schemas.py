@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 from typing import Optional, Union, List, Tuple
 from enum import Enum
 import config
@@ -6,6 +6,7 @@ import config
 
 class PipelineOptions(Enum):
     StableDiffusionPipeline = "StableDiffusionPipeline"
+    StableDiffusionImg2ImgPipeline = "StableDiffusionImg2ImgPipeline"
     StableDiffusionXLPipeline = "StableDiffusionXLPipeline"
 
 
@@ -19,6 +20,24 @@ class StableDiffusionPipelineParams(BaseModel):
     num_images_per_prompt: Optional[int] = None
     eta: Optional[float] = None
     seed: Optional[Union[int, List[int]]] = None
+
+    class Config:
+        extra = Extra.forbid
+
+
+class StableDiffusionImg2ImgPipelineParams(BaseModel):
+    prompt: Union[str, List[str]]
+    image: Union[str, List[str]]
+    num_inference_steps: Optional[int] = 15
+    strength: Optional[float] = None
+    guidance_scale: Optional[float] = None
+    negative_prompt: Optional[Union[str, List[str]]] = None
+    num_images_per_prompt: Optional[int] = None
+    eta: Optional[float] = None
+    seed: Optional[Union[int, List[int]]] = None
+
+    class Config:
+        extra = Extra.forbid
 
 
 class StableDiffusionXLPipelineParams(BaseModel):
@@ -41,6 +60,9 @@ class StableDiffusionXLPipelineParams(BaseModel):
     negative_crops_coords_top_left: Optional[Tuple[int, int]] = None
     negative_target_size: Optional[Tuple[int, int]] = None
 
+    class Config:
+        extra = Extra.forbid
+
 
 class GenerateParams(BaseModel):
     checkpoint: str
@@ -48,8 +70,15 @@ class GenerateParams(BaseModel):
     scheduler: Optional[str] = None
     a1111_scheduler: Optional[str] = None
     safety_checker: Optional[bool] = config.load_safety_checker
-    parameters: Union[StableDiffusionPipelineParams, StableDiffusionXLPipelineParams]
+    parameters: Union[
+        StableDiffusionPipelineParams,
+        StableDiffusionImg2ImgPipelineParams,
+        StableDiffusionXLPipelineParams,
+    ]
     return_images: Optional[bool] = True
+
+    class Config:
+        extra = Extra.forbid
 
 
 class ModelListFilters(BaseModel):
