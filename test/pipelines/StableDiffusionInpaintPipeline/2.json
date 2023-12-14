@@ -1,0 +1,13 @@
+{
+  "checkpoint": "dreamshaper_8.safetensors",
+  "pipeline": "StableDiffusionInpaintPipeline",
+  "a1111_scheduler": "Euler a",
+  "parameters": {
+    "prompt": "fire balls",
+    "num_inference_steps": 15,
+    "num_images_per_prompt": 4,
+    "image": "1.png",
+    "strength": 0.6,
+    "mask_image": "mask.jpg"
+  }
+}

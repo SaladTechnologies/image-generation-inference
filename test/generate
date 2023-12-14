@@ -17,6 +17,13 @@ for file in $fixture_dir/*.json; do
         cp "$file" /tmp/temp.json
     fi
 
+    mask_image_path=$(echo "$body" | jq -r '.parameters.mask_image')
+    if [[ $mask_image_path != "null" ]]; then
+        base64 "$fixture_dir/$mask_image_path" > /tmp/temp_mask_image_base64
+        body=$(jq --rawfile mask_image /tmp/temp_mask_image_base64 '.parameters.mask_image = $mask_image' "/tmp/temp.json")
+        echo $body > /tmp/temp.json
+    fi
+
     
 
     result=$(curl -X POST \

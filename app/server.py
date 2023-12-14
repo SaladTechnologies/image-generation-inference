@@ -103,7 +103,16 @@ async def generate(params: GenerateParams):
             gen_params["image"] = b64_to_pil(gen_params["image"])
         elif isinstance(gen_params["image"], list):
             gen_params["image"] = [b64_to_pil(img) for img in gen_params["image"]]
-        img_decode_time = time.perf_counter() - b64_decode
+        img_decode_time += time.perf_counter() - b64_decode
+    if "mask_image" in gen_params:
+        b64_decode = time.perf_counter()
+        if isinstance(gen_params["mask_image"], str):
+            gen_params["mask_image"] = b64_to_pil(gen_params["mask_image"])
+        elif isinstance(gen_params["mask_image"], list):
+            gen_params["mask_image"] = [
+                b64_to_pil(img) for img in gen_params["mask_image"]
+            ]
+        img_decode_time += time.perf_counter() - b64_decode
 
     # Manage safety checker preferences
     if params.safety_checker and hasattr(pipe, "safety_checker"):

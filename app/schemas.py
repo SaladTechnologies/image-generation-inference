@@ -7,6 +7,8 @@ import config
 class PipelineOptions(Enum):
     StableDiffusionPipeline = "StableDiffusionPipeline"
     StableDiffusionImg2ImgPipeline = "StableDiffusionImg2ImgPipeline"
+    StableDiffusionInpaintPipeline = "StableDiffusionInpaintPipeline"
+
     StableDiffusionXLPipeline = "StableDiffusionXLPipeline"
     StableDiffusionXLImg2ImgPipeline = "StableDiffusionXLImg2ImgPipeline"
 
@@ -32,6 +34,26 @@ class StableDiffusionPipelineParams(BaseModel):
 class StableDiffusionImg2ImgPipelineParams(BaseModel):
     prompt: Union[str, List[str]]
     image: Union[str, List[str]]
+    num_inference_steps: Optional[int] = 15
+    strength: Optional[float] = None
+    guidance_scale: Optional[float] = None
+    negative_prompt: Optional[Union[str, List[str]]] = None
+    num_images_per_prompt: Optional[int] = None
+    eta: Optional[float] = None
+    seed: Optional[Union[int, List[int]]] = None
+    clip_skip: Optional[int] = None
+    timesteps: Optional[List[int]] = None
+
+    class Config:
+        extra = Extra.forbid
+
+
+class StableDiffusionInpaintPipelineParams(BaseModel):
+    prompt: Union[str, List[str]]
+    image: Union[str, List[str]]
+    mask_image: Union[str, List[str]]
+    height: Optional[int] = None
+    width: Optional[int] = None
     num_inference_steps: Optional[int] = 15
     strength: Optional[float] = None
     guidance_scale: Optional[float] = None
@@ -73,9 +95,6 @@ class StableDiffusionXLPipelineParams(BaseModel):
 
 
 class StableDiffusionXLImg2ImgPipelineParams(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
     prompt: Union[str, List[str]]
     image: Union[str, List[str]]
     num_inference_steps: Optional[int] = 15
@@ -101,6 +120,9 @@ class StableDiffusionXLImg2ImgPipelineParams(BaseModel):
     guidance_rescale: Optional[float] = None
     timesteps: Optional[List[int]] = None
 
+    class Config:
+        extra = Extra.forbid
+
 
 class GenerateParams(BaseModel):
     checkpoint: str
@@ -111,10 +133,14 @@ class GenerateParams(BaseModel):
     parameters: Union[
         StableDiffusionPipelineParams,
         StableDiffusionImg2ImgPipelineParams,
+        StableDiffusionInpaintPipelineParams,
         StableDiffusionXLPipelineParams,
         StableDiffusionXLImg2ImgPipelineParams,
     ]
     return_images: Optional[bool] = True
+
+    class Config:
+        extra = Extra.forbid
 
     class Config:
         extra = Extra.forbid

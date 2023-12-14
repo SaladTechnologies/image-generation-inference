@@ -23,6 +23,8 @@ Additionally:
 
 ### StableDiffusionImg2ImgPipeline
 
+### StableDiffusionInpaintPipeline
+
 ### StableDiffusionXLPipeline
 
 ### StableDiffusionXLImg2ImgPipeline
