@@ -56,3 +56,51 @@ class ModelListFilters(BaseModel):
 
 class UnloadCheckpointParams(BaseModel):
     checkpoint: str
+
+
+class CPUFrequency(BaseModel):
+    current: float
+    min: float
+    max: float
+
+
+class CPUPerformance(BaseModel):
+    utilization: List[float]
+    frequency: List[CPUFrequency]
+
+
+class MemoryPerformance(BaseModel):
+    total: float
+    available: float
+    percent: float
+    used: float
+    free: float
+
+
+class StoragePerformance(BaseModel):
+    used: float
+    free: float
+
+
+class GPUPerformance(BaseModel):
+    id: int
+    name: str
+    load: float
+    free_memory: float
+    used_memory: float
+    total_memory: float
+    temperature: float
+
+
+class SystemPerformance(BaseModel):
+    cpu: CPUPerformance
+    memory: MemoryPerformance
+    storage: StoragePerformance
+    gpu: List[GPUPerformance]
+
+
+class ModelLoadedEvent(BaseModel):
+    checkpoint: str
+    time_utc: float
+    worker_identity: dict
+    stats: SystemPerformance

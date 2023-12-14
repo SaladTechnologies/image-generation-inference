@@ -13,9 +13,15 @@ from models import (
     list_loaded_checkpoints,
     unload_checkpoint,
 )
-from schemas import GenerateParams, ModelListFilters, UnloadCheckpointParams
+from schemas import (
+    GenerateParams,
+    ModelListFilters,
+    UnloadCheckpointParams,
+    SystemPerformance,
+)
 from image_utils import pil_to_b64
 import config
+from monitoring import get_detailed_system_performance
 from __version__ import VERSION
 
 
@@ -29,6 +35,11 @@ app = FastAPI()
 @app.get("/hc")
 async def health_check():
     return {"status": "ok", "version": VERSION}
+
+
+@app.get("/stats", response_model=SystemPerformance)
+async def system_stats():
+    return get_detailed_system_performance()
 
 
 @app.post("/generate")

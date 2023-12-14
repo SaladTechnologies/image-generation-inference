@@ -8,7 +8,7 @@ ckpt_dir=$model_dir/checkpoints
 lora_dir=$model_dir/lora
 vae_dir=$model_dir/vae
 controlnet_dir=$model_dir/controlnet
-export HF_HOME=$data_dir/huggingface
+export HF_HOME=${HF_HOME:-$data_dir/huggingface}
 
 mkdir -p $ckpt_dir
 mkdir -p $lora_dir
