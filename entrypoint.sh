@@ -6,7 +6,7 @@ data_dir=${DATA_DIR:-/data}
 model_dir=$data_dir/models
 ckpt_dir=$model_dir/checkpoints
 lora_dir=$model_dir/lora
-vae_dir=$model_dir/vae
+vae_dir=$model_dir/vae/sd1-5/
 controlnet_dir=$model_dir/controlnet
 export HF_HOME=${HF_HOME:-$data_dir/huggingface}
 

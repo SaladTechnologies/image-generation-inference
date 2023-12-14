@@ -4,6 +4,7 @@ import time
 import diffusers
 from sfast.compilers.stable_diffusion_pipeline_compiler import (
     compile,
+    compile_vae,
     CompilationConfig,
 )
 import huggingface_hub
@@ -32,7 +33,7 @@ loaded_lora = {}
 loaded_controlnet = {}
 
 
-def load_checkpoint(model_name: str):
+def load_checkpoint(model_name: str, vae: str = None):
     """_summary_
 
     Args:
@@ -48,7 +49,20 @@ def load_checkpoint(model_name: str):
         "device_map": "auto",
         "load_safety_checker": config.load_safety_checker,
         "use_safetensors": True,
+        "vae": None,
     }
+    if vae is not None and vae not in loaded_vae:
+        vae_model = diffusers.AutoencoderKL.from_pretrained(
+            os.path.join(config.vae_dir, vae),
+            use_safetensors=True,
+            torch_dtype=torch.float16,
+            variant="fp16",
+        )
+        model_kwargs["vae"] = vae_model
+        print(f"Loaded VAE {vae} for {model_name}", flush=True)
+    elif vae is not None and vae in loaded_vae:
+        model_kwargs["vae"] = loaded_vae[vae]
+        print(f"Using loaded VAE {vae} for {model_name}", flush=True)
 
     # if the model_name looks like org/repo, then we assume it's a HuggingFace model
     # otherwise, we assume it's a local model
@@ -80,12 +94,14 @@ class ModelManager:
     __schedulers__ = {}
     __safety_checker__ = None
     __feature_extractor__ = None
+    __vae_name__ = None
 
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, vae: str = None):
         self.model_name = model_name
-        pipe = load_checkpoint(model_name)
+        pipe = load_checkpoint(model_name, vae=vae)
         pipe_type = pipe.__class__.__name__
         self.default_pipeline = pipe_type
+        self.__vae_name__ = vae
         if hasattr(pipe, "safety_checker"):
             self.__safety_checker__ = pipe.safety_checker
             self.__feature_extractor__ = pipe.feature_extractor
@@ -99,6 +115,10 @@ class ModelManager:
             pipe.text_encoder_2.eval()
         pipe = compile(pipe, compile_config)
         end = time.perf_counter()
+        if vae is None and "default_vae" not in loaded_vae:
+            loaded_vae["default_vae"] = pipe.vae
+        elif vae is not None and vae not in loaded_vae:
+            loaded_vae[vae] = pipe.vae
         print(f"Compiled {model_name} in {end - start:.2f}s", flush=True)
         print(f"Warming up {model_name}", flush=True)
         start = time.perf_counter()
@@ -143,6 +163,10 @@ class ModelManager:
 
     def get_compatible_schedulers(self, pipeline_type: str):
         pipe = self.get_pipeline(pipeline_type)
+        # if the scheduler is tuple, print it
+        if isinstance(pipe.scheduler, tuple):
+            # print the type and value of all members of the tuple
+            print([(scheduler, type(scheduler)) for scheduler in pipe.scheduler])
         return pipe.scheduler._compatibles
 
     def get_a1111_scheduler(self, a1111_alias: str):
@@ -219,6 +243,7 @@ class ModelManager:
     def purge(self):
         for pipe in self.__pipes__.values():
             del pipe.vae
+            del loaded_vae[self.__vae_name__]
             del pipe.text_encoder
             del pipe.tokenizer
             del pipe.unet
@@ -233,9 +258,6 @@ class ModelManager:
                 del pipe.feature_extractor
             if hasattr(pipe, "controlnet"):
                 del pipe.controlnet
-            print(
-                [attribute for attribute in dir(pipe) if not attribute.startswith("_")]
-            )
 
             del pipe
         for scheduler in self.__schedulers__.values():
@@ -244,8 +266,25 @@ class ModelManager:
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
 
+    def set_vae(self, vae: str):
+        if vae == self.__vae_name__:
+            return
+        if vae not in loaded_vae:
+            loaded_vae[vae] = diffusers.AutoencoderKL.from_pretrained(
+                os.path.join(config.vae_dir, vae),
+                use_safetensors=True,
+                torch_dtype=torch.float16,
+                variant="fp16",
+            ).to("cuda")
+            loaded_vae[vae].eval()
+            loaded_vae[vae] = compile_vae(loaded_vae[vae], compile_config)
 
-def get_checkpoint(model_name: str):
+        for pipe in self.__pipes__.values():
+            pipe.vae = loaded_vae[vae]
+        self.__vae_name__ = vae
+
+
+def get_checkpoint(model_name: str, vae: str = None) -> ModelManager:
     """_summary_
 
     Args:
@@ -255,9 +294,12 @@ def get_checkpoint(model_name: str):
         DiffusionPipeline: A DiffusionPipeline that is approriate for the model type
     """
     if model_name not in loaded_checkpoints:
-        loaded_checkpoints[model_name] = ModelManager(model_name)
+        loaded_checkpoints[model_name] = ModelManager(model_name, vae=vae)
 
-    return loaded_checkpoints[model_name]
+    model = loaded_checkpoints[model_name]
+    if vae is not None:
+        model.set_vae(vae)
+    return model
 
 
 def list_local_checkpoints():

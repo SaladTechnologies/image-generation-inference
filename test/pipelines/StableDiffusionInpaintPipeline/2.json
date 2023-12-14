@@ -5,7 +5,7 @@
   "parameters": {
     "prompt": "fire balls",
     "num_inference_steps": 15,
-    "num_images_per_prompt": 4,
+    "num_images_per_prompt": 2,
     "image": "1.png",
     "strength": 0.6,
     "mask_image": "mask.jpg"

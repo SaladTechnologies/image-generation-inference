@@ -28,9 +28,9 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-if config.launch_ckpt is not None:
+if config.launch_ckpt is not None or config.launch_vae is not None:
     print(f"Preloading checkpoint {config.launch_ckpt}", flush=True)
-    get_checkpoint(config.launch_ckpt)
+    get_checkpoint(config.launch_ckpt, config.launch_vae)
 
 app = FastAPI(
     title="🥗 Image Generation Inference",
@@ -51,7 +51,7 @@ async def system_stats():
 @app.post("/generate")
 async def generate(params: GenerateParams):
     start = time.perf_counter()
-    model = get_checkpoint(params.checkpoint)
+    model = get_checkpoint(params.checkpoint, params.vae)
     try:
         pipe = model.get_pipeline(params.pipeline.value)
     except Exception as e:
@@ -159,7 +159,7 @@ async def unload(params: LoadOrUnloadCheckpointParams):
 
 @app.post("/load/checkpoint", response_model=list[str])
 async def load(params: LoadOrUnloadCheckpointParams):
-    get_checkpoint(params.checkpoint)
+    get_checkpoint(**params.model_dump())
     return list_loaded_checkpoints()
 
 

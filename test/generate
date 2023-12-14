@@ -1,10 +1,15 @@
 #! /usr/bin/env bash
 pipeline=${1:-StableDiffusionPipeline}
-fixture_dir=${2:-"test/pipelines/$pipeline"}
-outputs_dir=${3:-"test/outputs"}
+job_id=$2
+fixture_dir=${FIXTURE_DIR:-"test/pipelines/$pipeline"}
+outputs_dir=${OUTPUT_DIR:-"test/outputs"}
 mkdir -p $outputs_dir
 
-for file in $fixture_dir/*.json; do
+last_model=""
+
+function do_job() {
+    file=$1
+    echo "Running $file"
     body=$(cat $file)
     name=$(basename $file .json)
 
@@ -24,7 +29,15 @@ for file in $fixture_dir/*.json; do
         echo $body > /tmp/temp.json
     fi
 
-    
+    current_model=$(echo $body | jq -r '.checkpoint')
+    if [[ -n "$last_model" && "$last_model" != "$current_model" ]]; then
+        echo "Unloading $last_model"
+        curl -X POST \
+        'http://localhost:1234/unload/checkpoint' \
+        --header 'Content-Type: application/json' \
+        --data-raw "{\"checkpoint\": \"$last_model\"}" \
+        --fail 2>/dev/null
+    fi 
 
     result=$(curl -X POST \
         'http://localhost:1234/generate' \
@@ -42,8 +55,9 @@ for file in $fixture_dir/*.json; do
         --header 'Content-Type: application/json' \
         --data-binary @/tmp/temp.json
         echo "----------------------"
-        continue
+        return
     fi
+    last_model=$current_model
     meta=$(echo $result | jq -r '.meta')
     echo $meta | jq
     for idx in $(echo $result | jq -r '.images | keys | .[]'); do
@@ -51,4 +65,22 @@ for file in $fixture_dir/*.json; do
         image=$(echo $result | jq -r ".images[$idx]")
         echo $image | base64 -d > $filename
     done
+}
+
+if [[ -n "$job_id" ]]; then
+    do_job "$fixture_dir/$job_id.json"
+    exit 0
+fi
+
+for file in $fixture_dir/*.json; do
+    do_job $file
 done
+
+if [[ -n "$last_model" ]]; then
+    echo "Unloading $last_model"
+    curl -X POST \
+    'http://localhost:1234/unload/checkpoint' \
+    --header 'Content-Type: application/json' \
+    --data-raw "{\"checkpoint\": \"$last_model\"}" \
+    --fail 2>/dev/null
+fi

@@ -5,6 +5,6 @@
   "parameters": {
     "prompt": "a cat",
     "num_inference_steps": 15,
-    "num_images_per_prompt": 4
+    "num_images_per_prompt": 2
   }
 }

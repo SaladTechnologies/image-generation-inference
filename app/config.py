@@ -41,6 +41,7 @@ host = os.getenv("HOST", "*")
 port = int(os.getenv("PORT", "1234"))
 
 launch_ckpt = os.getenv("LAUNCH_CHECKPOINT", None)
+launch_vae = os.getenv("LAUNCH_VAE", None)
 
 image_storage_strategy = os.getenv("IMAGE_STORAGE_STRATEGY", "disk")
 

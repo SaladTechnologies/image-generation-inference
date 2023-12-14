@@ -130,6 +130,7 @@ class GenerateParams(BaseModel):
     scheduler: Optional[str] = None
     a1111_scheduler: Optional[str] = None
     safety_checker: Optional[bool] = config.load_safety_checker
+    vae: Optional[str] = None
     parameters: Union[
         StableDiffusionPipelineParams,
         StableDiffusionImg2ImgPipelineParams,
@@ -152,6 +153,7 @@ class ModelListFilters(BaseModel):
 
 class LoadOrUnloadCheckpointParams(BaseModel):
     checkpoint: str
+    vae: Optional[str] = None
 
 
 class CPUFrequency(BaseModel):

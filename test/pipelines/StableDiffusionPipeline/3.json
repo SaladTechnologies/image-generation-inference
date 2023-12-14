@@ -2,6 +2,7 @@
   "checkpoint": "stickerArt_sticker.safetensors",
   "pipeline": "StableDiffusionPipeline",
   "a1111_scheduler": "Euler a",
+  "vae": "sd2-1",
   "parameters": {
     "prompt": "simple cat logo",
     "num_inference_steps": 30,

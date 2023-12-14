@@ -3,6 +3,7 @@
   "pipeline": "StableDiffusionPipeline",
   "a1111_scheduler": "Euler a",
   "safety_checker": true,
+  "vae": "sd1-5",
   "parameters": {
     "prompt": "a cat",
     "num_inference_steps": 15
