@@ -4,7 +4,6 @@ import torch
 from fastapi import FastAPI, Response, Depends
 import json
 import uvicorn
-import io
 from models import (
     get_checkpoint,
     list_local_checkpoints,
@@ -15,18 +14,14 @@ from models import (
     unload_checkpoint,
 )
 from schemas import GenerateParams, ModelListFilters, UnloadCheckpointParams
-
-import base64
-from PIL import Image
+from image_utils import pil_to_b64
+import config
 from __version__ import VERSION
 
-host = os.getenv("HOST", "*")
-port = int(os.getenv("PORT", "1234"))
 
-launch_ckpt = os.getenv("LAUNCH_CHECKPOINT", None)
-if launch_ckpt is not None:
-    print(f"Preloading checkpoint {launch_ckpt}", flush=True)
-    get_checkpoint(launch_ckpt)
+if config.launch_ckpt is not None:
+    print(f"Preloading checkpoint {config.launch_ckpt}", flush=True)
+    get_checkpoint(config.launch_ckpt)
 
 app = FastAPI()
 
@@ -34,12 +29,6 @@ app = FastAPI()
 @app.get("/hc")
 async def health_check():
     return {"status": "ok", "version": VERSION}
-
-
-def pil_to_b64(image: Image):
-    img_byte_arr = io.BytesIO()
-    image.save(img_byte_arr, format="JPEG")
-    return base64.b64encode(img_byte_arr.getvalue()).decode("utf-8")
 
 
 @app.post("/generate")
@@ -145,4 +134,4 @@ def list_vae():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=host, port=port)
+    uvicorn.run(app, host=config.host, port=config.port)

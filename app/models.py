@@ -11,6 +11,7 @@ from sfast.compilers.stable_diffusion_pipeline_compiler import (
 )
 import huggingface_hub
 import gc
+import config
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
@@ -21,25 +22,11 @@ print("Diffusers version:", diffusers.__version__, flush=True)
 print("Transformers version:", transformers_version, flush=True)
 print("CUDA Available:", torch.cuda.is_available(), flush=True)
 
-data_dir = os.getenv("DATA_DIR", "/data")
-model_dir = os.path.join(data_dir, "models")
-checkpoint_dir = os.path.join(model_dir, "checkpoints")
-vae_dir = os.path.join(model_dir, "vae")
-lora_dir = os.path.join(model_dir, "lora")
-controlnet_dir = os.path.join(model_dir, "controlnet")
-diffusers_cache_dir = os.path.join(model_dir, "diffusers_cache")
-
-os.makedirs(checkpoint_dir, exist_ok=True)
-os.makedirs(vae_dir, exist_ok=True)
-os.makedirs(lora_dir, exist_ok=True)
-os.makedirs(controlnet_dir, exist_ok=True)
-
-cuda_graph = os.getenv("CUDA_GRAPH", "false").lower() == "true"
 
 compile_config = CompilationConfig.Default()
 compile_config.enable_xformers = True
 compile_config.enable_triton = True
-compile_config.enable_cuda_graph = cuda_graph
+compile_config.enable_cuda_graph = config.cuda_graph
 compile_config.memory_format = torch.channels_last
 
 loaded_checkpoints = {}
@@ -60,7 +47,6 @@ def load_checkpoint(model_name: str):
     model_kwargs = {
         "torch_dtype": torch.float16,
         "low_cpu_mem_usage": True,
-        "cache_dir": diffusers_cache_dir,
         "extract_ema": True,
         "device_map": "auto",
         "load_safety_checker": False,
@@ -79,7 +65,7 @@ def load_checkpoint(model_name: str):
         PipeClass = getattr(diffusers, default_pipeline)
         pipe = PipeClass.from_pretrained(model_name, **model_kwargs)
     elif model_name.endswith(".safetensors"):
-        model_path = os.path.join(checkpoint_dir, model_name)
+        model_path = os.path.join(config.checkpoint_dir, model_name)
         default_pipeline = "StableDiffusionPipeline"
         # if the model is > 4GB, then we assume it's a SDXL checkpoint
         if os.path.getsize(model_path) > 4 * 1024 * 1024 * 1024:
@@ -267,19 +253,19 @@ def get_checkpoint(model_name: str):
 
 
 def list_local_checkpoints():
-    return os.listdir(checkpoint_dir)
+    return os.listdir(config.checkpoint_dir)
 
 
 def list_local_vae():
-    return os.listdir(vae_dir)
+    return os.listdir(config.vae_dir)
 
 
 def list_local_lora():
-    return os.listdir(lora_dir)
+    return os.listdir(config.lora_dir)
 
 
 def list_local_controlnet():
-    return os.listdir(controlnet_dir)
+    return os.listdir(config.controlnet_dir)
 
 
 def list_loaded_checkpoints():
