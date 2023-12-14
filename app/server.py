@@ -95,12 +95,17 @@ async def generate(params: GenerateParams):
         gen_params["generator"] = generator
         del gen_params["seed"]
 
+    # We need to convert base64 images to PIL images
+    img_decode_time = 0
     if "image" in gen_params:
+        b64_decode = time.perf_counter()
         if isinstance(gen_params["image"], str):
             gen_params["image"] = b64_to_pil(gen_params["image"])
         elif isinstance(gen_params["image"], list):
             gen_params["image"] = [b64_to_pil(img) for img in gen_params["image"]]
+        img_decode_time = time.perf_counter() - b64_decode
 
+    # Manage safety checker preferences
     if params.safety_checker and hasattr(pipe, "safety_checker"):
         pipe.safety_checker = model.get_safety_checker()
         pipe.feature_extractor = model.get_feature_extractor()
@@ -109,9 +114,10 @@ async def generate(params: GenerateParams):
         pipe.feature_extractor = None
 
     try:
+        gen_start = time.perf_counter()
         images = pipe(**gen_params).images
         stop = time.perf_counter()
-        print(f"Generated {len(images)} images in {stop - pipe_loaded} seconds")
+        print(f"Generated {len(images)} images in {stop - gen_start} seconds")
         # if we're returning images, then we need to encode them as base64
         if params.return_images:
             images = [pil_to_b64(img) for img in images]
@@ -121,8 +127,8 @@ async def generate(params: GenerateParams):
             "inputs": params.model_dump(),
             "meta": {
                 "model_load_time": pipe_loaded - start,
-                "generation_time": stop - pipe_loaded,
-                "b64_encoding_time": b64_stop - stop,
+                "generation_time": stop - gen_start,
+                "b64_encoding_time": b64_stop - stop + img_decode_time,
                 "total_time": b64_stop - start,
             },
         }
