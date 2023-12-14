@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, Union, List, Tuple
 from enum import Enum
+import config
 
 
 class PipelineOptions(Enum):
@@ -46,6 +47,7 @@ class GenerateParams(BaseModel):
     pipeline: Optional[PipelineOptions] = PipelineOptions.StableDiffusionPipeline
     scheduler: Optional[str] = None
     a1111_scheduler: Optional[str] = None
+    safety_checker: Optional[bool] = config.load_safety_checker
     parameters: Union[StableDiffusionPipelineParams, StableDiffusionXLPipelineParams]
     return_images: Optional[bool] = True
 

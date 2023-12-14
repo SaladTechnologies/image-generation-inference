@@ -2,6 +2,7 @@
   "checkpoint": "dreamshaper_8.safetensors",
   "pipeline": "StableDiffusionPipeline",
   "a1111_scheduler": "Euler a",
+  "safety_checker": true,
   "parameters": {
     "prompt": "a cat",
     "num_inference_steps": 15

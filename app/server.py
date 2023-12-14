@@ -91,6 +91,13 @@ async def generate(params: GenerateParams):
         gen_params["generator"] = generator
         del gen_params["seed"]
 
+    if params.safety_checker:
+        pipe.safety_checker = model.get_safety_checker()
+        pipe.feature_extractor = model.get_feature_extractor()
+    else:
+        pipe.safety_checker = None
+        pipe.feature_extractor = None
+
     try:
         images = pipe(**gen_params).images
         stop = time.perf_counter()
@@ -118,36 +125,36 @@ async def generate(params: GenerateParams):
         )
 
 
-@app.post("/unload/checkpoint")
+@app.post("/unload/checkpoint", response_model=list[str])
 async def unload(params: LoadOrUnloadCheckpointParams):
     unload_checkpoint(params.checkpoint)
-    return {"status": "ok"}
+    return list_loaded_checkpoints()
 
 
-@app.post("/load/checkpoint")
+@app.post("/load/checkpoint", response_model=list[str])
 async def load(params: LoadOrUnloadCheckpointParams):
     get_checkpoint(params.checkpoint)
-    return {"status": "ok"}
+    return list_loaded_checkpoints()
 
 
-@app.get("/checkpoints")
+@app.get("/checkpoints", response_model=list[str])
 def list_checkpoints(params: ModelListFilters = Depends()):
     if params.loaded:
         return list_loaded_checkpoints()
     return list_local_checkpoints()
 
 
-@app.get("/controlnet")
+@app.get("/controlnet", response_model=list[str])
 def list_controlnet():
     return list_local_controlnet()
 
 
-@app.get("/lora")
+@app.get("/lora", response_model=list[str])
 def list_lora():
     return list_local_lora()
 
 
-@app.get("/vae")
+@app.get("/vae", response_model=list[str])
 def list_vae():
     return list_local_vae()
 

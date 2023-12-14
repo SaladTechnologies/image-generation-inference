@@ -17,3 +17,4 @@ services:
     environment:
       #   CIVITAI_MODEL_VERSION_IDS: 251662
       LAUNCH_CHECKPOINT: dreamshaper_8.safetensors
+      # LOAD_SAFETY_CHECKER: true

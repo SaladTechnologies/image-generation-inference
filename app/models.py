@@ -46,7 +46,7 @@ def load_checkpoint(model_name: str):
         "low_cpu_mem_usage": True,
         "extract_ema": True,
         "device_map": "auto",
-        "load_safety_checker": False,
+        "load_safety_checker": config.load_safety_checker,
         "use_safetensors": True,
     }
 
@@ -78,12 +78,16 @@ def load_checkpoint(model_name: str):
 class ModelManager:
     __pipes__ = {}
     __schedulers__ = {}
+    __safety_checker__ = None
+    __feature_extractor__ = None
 
     def __init__(self, model_name: str):
         self.model_name = model_name
         pipe = load_checkpoint(model_name)
         pipe_type = pipe.__class__.__name__
         self.default_pipeline = pipe_type
+        self.__safety_checker__ = pipe.safety_checker
+        self.__feature_extractor__ = pipe.feature_extractor
         print(f"Compiling {model_name} ({pipe_type})", flush=True)
         start = time.perf_counter()
         pipe.to("cuda")
@@ -101,6 +105,12 @@ class ModelManager:
         end = time.perf_counter()
         print(f"Warmed up {model_name} in {end - start:.2f}s", flush=True)
         self.__pipes__[pipe_type] = pipe
+
+    def get_safety_checker(self):
+        return self.__safety_checker__
+
+    def get_feature_extractor(self):
+        return self.__feature_extractor__
 
     def get_pipeline(self, pipeline_type: str = None):
         if pipeline_type is None:

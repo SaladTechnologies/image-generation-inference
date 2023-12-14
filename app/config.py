@@ -35,6 +35,13 @@ os.makedirs(controlnet_dir, exist_ok=True)
 
 cuda_graph = os.getenv("CUDA_GRAPH", "false").lower() == "true"
 
+load_safety_checker = os.getenv("LOAD_SAFETY_CHECKER", "false").lower() == "true"
+# safety_checker_model = os.getenv(
+#     "HF_SAFETY_CHECKER", "CompVis/stable-diffusion-safety-checker"
+# )
+# feature_extractor_model = os.getenv(
+#     "HF_FEATURE_EXTRACTOR", "openai/clip-vit-base-patch32"
+# )
 
 host = os.getenv("HOST", "*")
 port = int(os.getenv("PORT", "1234"))
