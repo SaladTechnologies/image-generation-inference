@@ -1,7 +1,7 @@
 {
   "checkpoint": "dreamshaperXL_turboDpmppSDE.safetensors",
   "pipeline": "StableDiffusionXLPipeline",
-  "a1111_scheduler": "Euler a",
+  "a1111_scheduler": "DPM++ SDE Karras",
   "parameters": {
     "prompt": "a cat",
     "num_inference_steps": 4,

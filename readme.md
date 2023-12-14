@@ -21,4 +21,6 @@ Additionally:
 
 ### StableDiffusionPipeline
 
+### StableDiffusionImg2ImgPipeline
+
 ### StableDiffusionXLPipeline
