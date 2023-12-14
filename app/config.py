@@ -1,5 +1,24 @@
 import os
+from __version__ import VERSION
+from torch import __version__ as torch_version
+from torch.version import cuda as cuda_version
+from xformers import __version__ as xformers_version
+from triton import __version__ as triton_version
+from diffusers import __version__ as diffusers_version
+from transformers import __version__ as transformers_version
+from sfast import __version__ as sfast_version
 
+version = VERSION
+
+package_versions = {
+    "torch": torch_version,
+    "cuda": cuda_version,
+    "xformers": xformers_version,
+    "triton": triton_version,
+    "diffusers": diffusers_version,
+    "transformers": transformers_version,
+    "stable_fast": sfast_version,
+}
 
 data_dir = os.getenv("DATA_DIR", "/data")
 model_dir = os.path.join(data_dir, "models")

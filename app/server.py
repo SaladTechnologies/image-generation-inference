@@ -16,25 +16,27 @@ from models import (
 from schemas import (
     GenerateParams,
     ModelListFilters,
-    UnloadCheckpointParams,
+    LoadOrUnloadCheckpointParams,
     SystemPerformance,
 )
 from image_utils import pil_to_b64
 import config
 from monitoring import get_detailed_system_performance
-from __version__ import VERSION
 
 
 if config.launch_ckpt is not None:
     print(f"Preloading checkpoint {config.launch_ckpt}", flush=True)
     get_checkpoint(config.launch_ckpt)
 
-app = FastAPI()
+app = FastAPI(
+    title="🥗 Image Generation Inference",
+    version=config.version,
+)
 
 
 @app.get("/hc")
 async def health_check():
-    return {"status": "ok", "version": VERSION}
+    return {"status": "ok", "version": config.version}
 
 
 @app.get("/stats", response_model=SystemPerformance)
@@ -116,9 +118,15 @@ async def generate(params: GenerateParams):
         )
 
 
-@app.post("/unload")
-async def unload(params: UnloadCheckpointParams):
+@app.post("/unload/checkpoint")
+async def unload(params: LoadOrUnloadCheckpointParams):
     unload_checkpoint(params.checkpoint)
+    return {"status": "ok"}
+
+
+@app.post("/load/checkpoint")
+async def load(params: LoadOrUnloadCheckpointParams):
+    get_checkpoint(params.checkpoint)
     return {"status": "ok"}
 
 

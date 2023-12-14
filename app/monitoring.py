@@ -3,7 +3,7 @@ import os
 import shutil
 import config
 import GPUtil
-import time
+
 
 GB = 1024 * 1024 * 1024
 
@@ -41,6 +41,7 @@ def get_detailed_system_performance():
         "memory": memory_utilization,
         "storage": storage,
         "gpu": get_gpu_info(),
+        "packages": config.package_versions,
     }
 
 

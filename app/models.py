@@ -1,9 +1,6 @@
 import torch
 import os
 import time
-import xformers
-import triton
-from transformers import __version__ as transformers_version
 import diffusers
 from sfast.compilers.stable_diffusion_pipeline_compiler import (
     compile,
@@ -15,12 +12,12 @@ import config
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
-print("Torch version:", torch.__version__, flush=True)
-print("XFormers version:", xformers.__version__, flush=True)
-print("Triton version:", triton.__version__, flush=True)
-print("Diffusers version:", diffusers.__version__, flush=True)
-print("Transformers version:", transformers_version, flush=True)
-print("CUDA Available:", torch.cuda.is_available(), flush=True)
+print("Torch version:", config.package_versions["torch"], flush=True)
+print("XFormers version:", config.package_versions["xformers"], flush=True)
+print("Triton version:", config.package_versions["triton"], flush=True)
+print("Diffusers version:", config.package_versions["diffusers"], flush=True)
+print("Transformers version:", config.package_versions["transformers"], flush=True)
+print("CUDA Version:", config.package_versions["cuda"], flush=True)
 
 
 compile_config = CompilationConfig.Default()

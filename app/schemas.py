@@ -54,7 +54,7 @@ class ModelListFilters(BaseModel):
     loaded: Optional[bool] = False
 
 
-class UnloadCheckpointParams(BaseModel):
+class LoadOrUnloadCheckpointParams(BaseModel):
     checkpoint: str
 
 
@@ -92,11 +92,22 @@ class GPUPerformance(BaseModel):
     temperature: float
 
 
+class PackageVersions(BaseModel):
+    torch: str
+    cuda: str
+    xformers: str
+    triton: str
+    diffusers: str
+    transformers: str
+    stable_fast: str
+
+
 class SystemPerformance(BaseModel):
     cpu: CPUPerformance
     memory: MemoryPerformance
     storage: StoragePerformance
     gpu: List[GPUPerformance]
+    packages: PackageVersions
 
 
 class ModelLoadedEvent(BaseModel):
