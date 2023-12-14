@@ -24,3 +24,5 @@ Additionally:
 ### StableDiffusionImg2ImgPipeline
 
 ### StableDiffusionXLPipeline
+
+### StableDiffusionXLImg2ImgPipeline
