@@ -2,7 +2,7 @@ import torch
 import os
 import time
 import diffusers
-from sfast.compilers.stable_diffusion_pipeline_compiler import (
+from sfast.compilers.diffusion_pipeline_compiler import (
     compile,
     compile_vae,
     CompilationConfig,
@@ -19,6 +19,7 @@ print("Triton version:", config.package_versions["triton"], flush=True)
 print("Diffusers version:", config.package_versions["diffusers"], flush=True)
 print("Transformers version:", config.package_versions["transformers"], flush=True)
 print("CUDA Version:", config.package_versions["cuda"], flush=True)
+print("Stable Fast version:", config.package_versions["stable_fast"], flush=True)
 
 
 compile_config = CompilationConfig.Default()
@@ -122,7 +123,8 @@ class ModelManager:
         print(f"Compiled {model_name} in {end - start:.2f}s", flush=True)
         print(f"Warming up {model_name}", flush=True)
         start = time.perf_counter()
-        pipe(prompt="Leafy Green Salad", num_inference_steps=1)
+        for _ in range(2):
+            pipe(prompt="Leafy Green Salad", num_inference_steps=1)
         end = time.perf_counter()
         print(f"Warmed up {model_name} in {end - start:.2f}s", flush=True)
         self.__pipes__[pipe_type] = pipe

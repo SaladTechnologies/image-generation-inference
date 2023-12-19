@@ -101,4 +101,4 @@ if __name__ == "__main__":
     else:
         for file in sorted(Path(fixture_dir).glob("*.json")):
             do_job(file, fixture_dir, outputs_dir)
-    unload_model()
+    # unload_model()

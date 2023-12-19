@@ -25,7 +25,7 @@ ENV TORCH_CUDA_ARCH_LIST=All
 ENV MAX_JOBS=4
 ENV LD_PRELOAD=libtcmalloc.so
 RUN pip install --upgrade --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121
-RUN WITH_CUDA=0 pip install -v -U git+https://github.com/chengzeyi/stable-fast.git@v0.0.15#egg=stable-fast
+RUN WITH_CUDA=0 pip install -v -U git+https://github.com/chengzeyi/stable-fast.git@v1.0.0#egg=stable-fast
 
 COPY ./app ./
 

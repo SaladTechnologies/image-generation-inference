@@ -28,3 +28,9 @@ Additionally:
 ### StableDiffusionXLPipeline
 
 ### StableDiffusionXLImg2ImgPipeline
+
+## Supported Model Types
+
+- SD1.5
+- SD2.1
+- SDXL Turbo
