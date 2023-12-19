@@ -151,7 +151,7 @@ class ModelListFilters(BaseModel):
     loaded: Optional[bool] = False
 
 
-class LoadOrUnloadCheckpointParams(BaseModel):
+class LoadCheckpointParams(BaseModel):
     checkpoint: str
     vae: Optional[str] = None
 

@@ -1,7 +1,8 @@
 import time
 import os
+import sys
 import torch
-from fastapi import FastAPI, Response, Depends
+from fastapi import FastAPI, Response, Depends, BackgroundTasks
 import json
 import uvicorn
 from models import (
@@ -11,12 +12,11 @@ from models import (
     list_local_lora,
     list_local_vae,
     list_loaded_checkpoints,
-    unload_checkpoint,
 )
 from schemas import (
     GenerateParams,
     ModelListFilters,
-    LoadOrUnloadCheckpointParams,
+    LoadCheckpointParams,
     SystemPerformance,
 )
 from image_utils import pil_to_b64, b64_to_pil
@@ -151,15 +151,9 @@ async def generate(params: GenerateParams):
         )
 
 
-@app.post("/unload/checkpoint", response_model=list[str])
-async def unload(params: LoadOrUnloadCheckpointParams):
-    unload_checkpoint(params.checkpoint)
-    return list_loaded_checkpoints()
-
-
 @app.post("/load/checkpoint", response_model=list[str])
-async def load(params: LoadOrUnloadCheckpointParams):
-    get_checkpoint(**params.model_dump())
+async def load(params: LoadCheckpointParams):
+    get_checkpoint(params.checkpoint, params.vae)
     return list_loaded_checkpoints()
 
 
@@ -183,6 +177,24 @@ def list_lora():
 @app.get("/vae", response_model=list[str])
 def list_vae():
     return list_local_vae()
+
+
+def restart_server():
+    try:
+        # Note: sys.executable is the path to the Python interpreter
+        #       sys.argv is the list of command line arguments passed to the Python script
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+    except Exception as e:
+        # Handle exceptions if any
+        print(f"Error during program restart: {e}")
+
+
+@app.post("/restart")
+def restart(background_tasks: BackgroundTasks):
+    # Return a 202 to indicate that the request has been accepted for processing,
+    # but the processing has not been completed.
+    background_tasks.add_task(restart_server)
+    return Response(status_code=202)
 
 
 if __name__ == "__main__":

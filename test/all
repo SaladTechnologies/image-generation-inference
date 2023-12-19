@@ -3,5 +3,5 @@
 for pipeline in $(ls test/pipelines); do
     echo "---------------------------------"
     echo "Generating images for $pipeline" 
-    ./test/generate $pipeline
+    python3 test/generate.py $pipeline
 done
