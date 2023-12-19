@@ -1,16 +1,16 @@
 {
-  "checkpoint": "dreamshaperXL_turboDpmppSDE.safetensors",
+  "checkpoint": "rundiffusionXL_beta.safetensors",
   "pipeline": "StableDiffusionXLInpaintPipeline",
   "a1111_scheduler": "DPM++ SDE Karras",
   "parameters": {
     "prompt": "river of fiery molten magma",
-    "negative_prompt": "blue, water, cool",
+    "negative_prompt": "blue, water, cool, steam, white",
     "image": "1.jpg",
     "mask_image": "mask.jpg",
-    "strength": 0.99,
+    "strength": 0.85,
     "width": 1024,
     "height": 768,
-    "num_inference_steps": 4,
-    "guidance_scale": 2.0
+    "num_inference_steps": 25,
+    "guidance_scale": 8.0
   }
 }

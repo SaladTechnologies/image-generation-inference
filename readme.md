@@ -10,7 +10,7 @@ API docs at `/docs`
 
 Everything you need and nothing you don't. Server-only, no UI.
 
-The goal here is to support all image generation models supported by Diffusers.
+The goal here is to support all image generation models and pipelines supported by Diffusers.
 Additionally:
 - Model swapping
 - Lora-per-request
@@ -35,4 +35,5 @@ Additionally:
 
 - SD1.5
 - SD2.1
+- SDXL 1.0
 - SDXL Turbo

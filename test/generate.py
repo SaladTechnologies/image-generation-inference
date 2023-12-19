@@ -20,17 +20,14 @@ def do_job(file_path, fixture_dir, outputs_dir):
     print(f"Generating {file_path}")
 
     if "parameters" in body:
-        if "image" in body["parameters"] and body["parameters"]["image"] != "null":
+        if "image" in body["parameters"]:
             with open(
                 os.path.join(fixture_dir, body["parameters"]["image"]), "rb"
             ) as img_file:
                 encoded_image = base64.b64encode(img_file.read()).decode()
             body["parameters"]["image"] = encoded_image
 
-        if (
-            "mask_image" in body["parameters"]
-            and body["parameters"]["mask_image"] != "null"
-        ):
+        if "mask_image" in body["parameters"]:
             with open(
                 os.path.join(fixture_dir, body["parameters"]["mask_image"]), "rb"
             ) as mask_file:
