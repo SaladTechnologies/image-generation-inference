@@ -29,6 +29,8 @@ Additionally:
 
 ### StableDiffusionXLImg2ImgPipeline
 
+### StableDiffusionXLInpaintPipeline
+
 ## Supported Model Types
 
 - SD1.5
