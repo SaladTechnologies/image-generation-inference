@@ -2,6 +2,9 @@
 
 set -eou pipefail
 
+# wget https://raw.githubusercontent.com/SaladTechnologies/stable-diffusion-configurator/main/configure -O configure
+# chmod +x configure
+
 data_dir=${DATA_DIR:-/data}
 model_dir=$data_dir/models
 ckpt_dir=$model_dir/checkpoints

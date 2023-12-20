@@ -5,6 +5,7 @@ import diffusers
 from sfast.compilers.diffusion_pipeline_compiler import (
     compile,
     compile_vae,
+    compile_unet,
     CompilationConfig,
 )
 import huggingface_hub
@@ -34,7 +35,9 @@ loaded_lora = {}
 loaded_controlnet = {}
 
 
-def load_checkpoint(model_name: str, vae: str = None):
+def load_checkpoint(
+    model_name: str, vae: str = None, refiner_for: str = None
+) -> diffusers.DiffusionPipeline:
     """_summary_
 
     Args:
@@ -43,15 +46,17 @@ def load_checkpoint(model_name: str, vae: str = None):
     Returns:
         DiffusionPipeline: A DiffusionPipeline that is approriate for the model type
     """
+    print(f"Loading Checkpoint: {model_name}", flush=True)
     model_kwargs = {
         "torch_dtype": torch.float16,
         "low_cpu_mem_usage": True,
         "extract_ema": True,
-        "device_map": "auto",
         "load_safety_checker": config.load_safety_checker,
         "use_safetensors": True,
         "vae": None,
     }
+    if torch.cuda.is_available():
+        model_kwargs["device"] = "cuda"
     if vae is not None and vae not in loaded_vae:
         vae_model = diffusers.AutoencoderKL.from_pretrained(
             os.path.join(config.vae_dir, vae),
@@ -65,13 +70,21 @@ def load_checkpoint(model_name: str, vae: str = None):
         model_kwargs["vae"] = loaded_vae[vae]
         print(f"Using loaded VAE {vae} for {model_name}", flush=True)
 
+    if refiner_for is not None and refiner_for not in loaded_checkpoints:
+        raise Exception(f"Unknown base model {refiner_for}")
+    elif refiner_for is not None:
+        base = loaded_checkpoints[refiner_for].get_pipeline()
+        model_kwargs["text_encoder_2"] = base.text_encoder_2
+        model_kwargs["vae"] = base.vae
+        model_kwargs["variant"] = "fp16"
+
     # if the model_name looks like org/repo, then we assume it's a HuggingFace model
     # otherwise, we assume it's a local model
     start = time.perf_counter()
     if "/" in model_name and not model_name.endswith(".safetensors"):
         model_info = huggingface_hub.model_info(model_name)
-        if "config" in model_info and "diffusers" in model_info["config"]:
-            default_pipeline = model_info["config"]["diffusers"]["class_name"]
+        if "diffusers" in model_info.config:
+            default_pipeline = model_info.config["diffusers"]["class_name"]
         else:
             raise Exception(f"Unable to find config for {model_name}")
         PipeClass = getattr(diffusers, default_pipeline)
@@ -90,6 +103,34 @@ def load_checkpoint(model_name: str, vae: str = None):
     return pipe
 
 
+def load_controlnet(model_name: str) -> diffusers.ControlNetModel:
+    """
+    Load a ControlNet model.
+
+    Args:
+        model_name (str): The name of the model to load. Either a huggingface model ID (e.g. diffusers/controlnet-canny-sdxl-1.0) or a local safetensors filename (e.g. qrCodeMonster_v20.safetensors)
+
+    Returns:
+        ControlNetModel: The loaded ControlNet model.
+
+    """
+    print(f"Loading ControlNet: {model_name}", flush=True)
+    model_kwargs = {"torch_dtype": torch.float16, "low_cpu_mem_usage": True}
+    start = time.perf_counter()
+    if "/" in model_name and not model_name.endswith(".safetensors"):
+        controlnet = diffusers.ControlNetModel.from_pretrained(
+            model_name, **model_kwargs
+        )
+    elif model_name.endswith(".safetensors"):
+        model_path = os.path.join(config.controlnet_dir, model_name)
+        controlnet = diffusers.ControlNetModel.from_single_file(
+            model_path, **model_kwargs
+        )
+    end = time.perf_counter()
+    print(f"Loaded ControlNet {model_name} in {end - start:.2f}s", flush=True)
+    return controlnet
+
+
 class ModelManager:
     __pipes__ = {}
     __schedulers__ = {}
@@ -97,23 +138,31 @@ class ModelManager:
     __feature_extractor__ = None
     __vae_name__ = None
 
-    def __init__(self, model_name: str, vae: str = None):
+    def __init__(self, model_name: str, vae: str = None, refiner_for: str = None):
         self.model_name = model_name
-        pipe = load_checkpoint(model_name, vae=vae)
+        pipe = load_checkpoint(model_name, vae=vae, refiner_for=refiner_for)
         pipe_type = pipe.__class__.__name__
         self.default_pipeline = pipe_type
         self.__vae_name__ = vae
         if hasattr(pipe, "safety_checker"):
             self.__safety_checker__ = pipe.safety_checker
             self.__feature_extractor__ = pipe.feature_extractor
-        print(f"Compiling {model_name} ({pipe_type})", flush=True)
+        print(f"Moving {model_name} ({pipe_type}) to GPU", flush=True)
         start = time.perf_counter()
         pipe.to("cuda")
-        pipe.text_encoder.eval()
-        pipe.unet.eval()
-        pipe.vae.eval()
-        if pipe_type == "StableDiffusionXLPipeline":
+        end = time.perf_counter()
+        print(f"Moved {model_name} to GPU in {end - start:.2f}s", flush=True)
+        print(f"Compiling {model_name}", flush=True)
+        start = time.perf_counter()
+        if hasattr(pipe, "unet") and pipe.unet is not None:
+            pipe.unet.eval()
+        if hasattr(pipe, "text_encoder") and pipe.text_encoder is not None:
+            pipe.text_encoder.eval()
+        if hasattr(pipe, "text_encoder_2") and pipe.text_encoder_2 is not None:
             pipe.text_encoder_2.eval()
+        if hasattr(pipe, "vae") and pipe.vae is not None:
+            pipe.vae.eval()
+
         pipe = compile(pipe, compile_config)
         end = time.perf_counter()
         if vae is None and "default_vae" not in loaded_vae:
@@ -135,7 +184,7 @@ class ModelManager:
     def get_feature_extractor(self):
         return self.__feature_extractor__
 
-    def get_pipeline(self, pipeline_type: str = None):
+    def get_pipeline(self, pipeline_type: str = None, control_model: str = None):
         if pipeline_type is None:
             pipeline_type = self.default_pipeline
         if pipeline_type not in self.__pipes__:
@@ -143,7 +192,10 @@ class ModelManager:
                 PipeClass = getattr(diffusers, pipeline_type)
             except AttributeError:
                 raise Exception(f"Unknown pipeline type {pipeline_type}")
-            pipe = PipeClass(**self.__pipes__[self.default_pipeline].components)
+            pipe_kwargs = {**self.__pipes__[self.default_pipeline].components}
+            if control_model is not None:
+                pipe_kwargs["controlnet"] = get_controlnet(control_model)
+            pipe = PipeClass(**pipe_kwargs)
             self.__pipes__[pipeline_type] = pipe
         return self.__pipes__[pipeline_type]
 
@@ -260,7 +312,9 @@ class ModelManager:
         self.__vae_name__ = vae
 
 
-def get_checkpoint(model_name: str, vae: str = None) -> ModelManager:
+def get_checkpoint(
+    model_name: str, vae: str = None, refiner_for: str = None
+) -> ModelManager:
     """_summary_
 
     Args:
@@ -270,7 +324,9 @@ def get_checkpoint(model_name: str, vae: str = None) -> ModelManager:
         DiffusionPipeline: A DiffusionPipeline that is approriate for the model type
     """
     if model_name not in loaded_checkpoints:
-        loaded_checkpoints[model_name] = ModelManager(model_name, vae=vae)
+        loaded_checkpoints[model_name] = ModelManager(
+            model_name, vae=vae, refiner_for=refiner_for
+        )
 
     model = loaded_checkpoints[model_name]
     if vae is not None:
@@ -296,3 +352,29 @@ def list_local_controlnet():
 
 def list_loaded_checkpoints():
     return list(loaded_checkpoints.keys())
+
+
+def get_controlnet(model_name: str) -> diffusers.ControlNetModel:
+    """_summary_
+
+    Args:
+        model_name (str): Either a HuggingFace model name (e.g. diffusers/controlnet-canny-sdxl-1.0) or a local safetensors filename (e.g. qrCodeMonster_v20.safetensors)
+
+    Returns:
+        ControlNetModel: A ControlNetModel that is approriate for the model type
+    """
+    if model_name not in loaded_controlnet:
+        controlnet = load_controlnet(model_name)
+        print(f"Moving {model_name} to GPU", flush=True)
+        start = time.perf_counter()
+        controlnet.to("cuda")
+        end = time.perf_counter()
+        print(f"Moved {model_name} to GPU in {end - start:.2f}s", flush=True)
+        print(f"Compiling {model_name}", flush=True)
+        start = time.perf_counter()
+        controlnet = compile_unet(controlnet, compile_config)
+        end = time.perf_counter()
+        print(f"Compiled {model_name} in {end - start:.2f}s", flush=True)
+        loaded_controlnet[model_name] = controlnet
+
+    return loaded_controlnet[model_name]

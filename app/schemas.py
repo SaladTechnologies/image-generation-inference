@@ -8,6 +8,10 @@ class PipelineOptions(Enum):
     StableDiffusionPipeline = "StableDiffusionPipeline"
     StableDiffusionImg2ImgPipeline = "StableDiffusionImg2ImgPipeline"
     StableDiffusionInpaintPipeline = "StableDiffusionInpaintPipeline"
+    StableDiffusionControlNetPipeline = "StableDiffusionControlNetPipeline"
+    StableDiffusionControlNetImg2ImgPipeline = (
+        "StableDiffusionControlNetImg2ImgPipeline"
+    )
 
     StableDiffusionXLPipeline = "StableDiffusionXLPipeline"
     StableDiffusionXLImg2ImgPipeline = "StableDiffusionXLImg2ImgPipeline"
@@ -69,6 +73,51 @@ class StableDiffusionInpaintPipelineParams(BaseModel):
         extra = Extra.forbid
 
 
+class StableDiffusionControlNetPipelineParams(BaseModel):
+    prompt: Union[str, List[str]]
+    image: Union[str, List[str]]
+    height: Optional[int] = None
+    width: Optional[int] = None
+    num_inference_steps: Optional[int] = 15
+    timesteps: Optional[List[int]] = None
+    guidance_scale: Optional[float] = None
+    negative_prompt: Optional[Union[str, List[str]]] = None
+    num_images_per_prompt: Optional[int] = None
+    eta: Optional[float] = None
+    seed: Optional[Union[int, List[int]]] = None
+    controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None
+    guess_mode: Optional[bool] = None
+    control_guidance_start: Optional[Union[float, List[float]]] = None
+    control_guidance_end: Optional[Union[float, List[float]]] = None
+    clip_skip: Optional[int] = None
+
+    class Config:
+        extra = Extra.forbid
+
+
+class StableDiffusionControlNetImg2ImgPipelineParams(BaseModel):
+    prompt: Union[str, List[str]]
+    image: Union[str, List[str]]
+    control_image: Union[str, List[str]]
+    height: Optional[int] = None
+    width: Optional[int] = None
+    num_inference_steps: Optional[int] = 15
+    timesteps: Optional[List[int]] = None
+    guidance_scale: Optional[float] = None
+    negative_prompt: Optional[Union[str, List[str]]] = None
+    num_images_per_prompt: Optional[int] = None
+    eta: Optional[float] = None
+    seed: Optional[Union[int, List[int]]] = None
+    controlnet_conditioning_scale: Optional[Union[float, List[float]]] = None
+    guess_mode: Optional[bool] = None
+    control_guidance_start: Optional[Union[float, List[float]]] = None
+    control_guidance_end: Optional[Union[float, List[float]]] = None
+    clip_skip: Optional[int] = None
+
+    class Config:
+        extra = Extra.forbid
+
+
 class StableDiffusionXLPipelineParams(BaseModel):
     prompt: Union[str, List[str]]
     prompt_2: Optional[Union[str, List[str]]] = None
@@ -76,6 +125,7 @@ class StableDiffusionXLPipelineParams(BaseModel):
     width: Optional[int] = None
     num_inference_steps: Optional[int] = 15
     denoising_end: Optional[float] = None
+    denoising_start: Optional[float] = None
     guidance_scale: Optional[float] = None
     negative_prompt: Optional[Union[str, List[str]]] = None
     negative_prompt_2: Optional[Union[str, List[str]]] = None
@@ -153,9 +203,14 @@ class StableDiffusionXLInpaintPipelineParams(BaseModel):
     negative_aesthetic_score: Optional[float] = None
     clip_skip: Optional[int] = None
 
+    class Config:
+        extra = Extra.forbid
+
 
 class GenerateParams(BaseModel):
     checkpoint: str
+    refiner: Optional[str] = None
+    control_model: Optional[Union[str, List[str]]] = None
     pipeline: Optional[PipelineOptions] = PipelineOptions.StableDiffusionPipeline
     scheduler: Optional[str] = None
     a1111_scheduler: Optional[str] = None
@@ -165,6 +220,8 @@ class GenerateParams(BaseModel):
         StableDiffusionPipelineParams,
         StableDiffusionImg2ImgPipelineParams,
         StableDiffusionInpaintPipelineParams,
+        StableDiffusionControlNetPipelineParams,
+        StableDiffusionControlNetImg2ImgPipelineParams,
         StableDiffusionXLPipelineParams,
         StableDiffusionXLImg2ImgPipelineParams,
         StableDiffusionXLInpaintPipelineParams,

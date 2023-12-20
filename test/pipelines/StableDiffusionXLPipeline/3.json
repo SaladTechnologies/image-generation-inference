@@ -1,0 +1,13 @@
+{
+  "checkpoint": "rundiffusionXL_beta.safetensors",
+  "refiner": "stabilityai/stable-diffusion-xl-refiner-1.0",
+  "pipeline": "StableDiffusionXLPipeline",
+  "a1111_scheduler": "DPM++ SDE Karras",
+  "parameters": {
+    "prompt": "a housecat, believing itself to be a tiger in the jungle",
+    "num_inference_steps": 35,
+    "guidance_scale": 7.0,
+    "denoising_end": 0.8,
+    "denoising_start": 0.8
+  }
+}

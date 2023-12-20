@@ -38,25 +38,22 @@ def do_job(file_path, fixture_dir, outputs_dir):
     if last_model and last_model != current_model:
         unload_model()
 
-    try:
-        result = requests.post(
-            "http://localhost:1234/generate",
-            headers={"Content-Type": "application/json"},
-            json=body,
-        )
-        result.raise_for_status()
-    except requests.HTTPError:
+    result = requests.post(
+        "http://localhost:1234/generate",
+        headers={"Content-Type": "application/json"},
+        json=body,
+    )
+    body = result.json()
+    if result.status_code != 200:
         print(
             f"----------------------\nFailed to generate {name}.json\n----------------------"
         )
-        result = requests.post(
-            "http://localhost:1234/generate",
-            headers={"Content-Type": "application/json"},
-            json=body,
-        )
+        print(json.dumps(body, indent=2))
+        return
 
     last_model = current_model
-    meta = result.json()["meta"]
+
+    meta = body["meta"]
     print(json.dumps(meta, indent=2))
 
     for idx, image in enumerate(result.json().get("images", [])):

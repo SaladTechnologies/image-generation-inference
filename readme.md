@@ -25,6 +25,8 @@ Additionally:
 
 ### StableDiffusionInpaintPipeline
 
+### StableDiffusionControlNetPipeline
+
 ### StableDiffusionXLPipeline
 
 ### StableDiffusionXLImg2ImgPipeline

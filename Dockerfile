@@ -32,7 +32,7 @@ COPY ./app ./
 ENV HOST='*'
 ENV PORT=1234
 
-RUN wget https://raw.githubusercontent.com/SaladTechnologies/stable-diffusion-configurator/main/configure && chmod +x configure && echo "Config Utility Installed.."
+RUN wget https://raw.githubusercontent.com/SaladTechnologies/stable-diffusion-configurator/main/configure -O configure && chmod +x configure && echo "Config Utility Installed.."
 
 COPY entrypoint.sh /entrypoint.sh
 

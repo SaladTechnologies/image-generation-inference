@@ -1,3 +1,4 @@
+import copy
 import time
 import os
 import sys
@@ -19,7 +20,7 @@ from schemas import (
     LoadCheckpointParams,
     SystemPerformance,
 )
-from image_utils import pil_to_b64, b64_to_pil
+from image_utils import pil_to_b64, prepare_image_field
 import config
 from monitoring import get_detailed_system_performance
 import logging
@@ -51,15 +52,30 @@ async def system_stats():
 @app.post("/generate")
 async def generate(params: GenerateParams):
     start = time.perf_counter()
-    model = get_checkpoint(params.checkpoint, params.vae)
+    model = get_checkpoint(params.checkpoint, vae=params.vae)
+    refiner_pipe = None
     try:
-        pipe = model.get_pipeline(params.pipeline.value)
+        pipe = model.get_pipeline(
+            params.pipeline.value, control_model=params.control_model
+        )
     except Exception as e:
+        logging.exception(e)
         return Response(
             json.dumps({"error": str(e)}),
             status_code=500,
             media_type="application/json",
         )
+    if params.refiner is not None:
+        try:
+            refiner = get_checkpoint(params.refiner, refiner_for=params.checkpoint)
+            refiner_pipe = refiner.get_pipeline(params.pipeline.value)
+        except Exception as e:
+            logging.exception(e)
+            return Response(
+                json.dumps({"error": str(e)}),
+                status_code=500,
+                media_type="application/json",
+            )
     pipe_loaded = time.perf_counter()
 
     # Check if the scheduler is compatible with the pipeline
@@ -99,20 +115,23 @@ async def generate(params: GenerateParams):
     img_decode_time = 0
     if "image" in gen_params:
         b64_decode = time.perf_counter()
-        if isinstance(gen_params["image"], str):
-            gen_params["image"] = b64_to_pil(gen_params["image"])
-        elif isinstance(gen_params["image"], list):
-            gen_params["image"] = [b64_to_pil(img) for img in gen_params["image"]]
+        gen_params["image"] = prepare_image_field(gen_params["image"])
         img_decode_time += time.perf_counter() - b64_decode
     if "mask_image" in gen_params:
         b64_decode = time.perf_counter()
-        if isinstance(gen_params["mask_image"], str):
-            gen_params["mask_image"] = b64_to_pil(gen_params["mask_image"])
-        elif isinstance(gen_params["mask_image"], list):
-            gen_params["mask_image"] = [
-                b64_to_pil(img) for img in gen_params["mask_image"]
-            ]
+        gen_params["mask_image"] = prepare_image_field(gen_params["mask_image"])
         img_decode_time += time.perf_counter() - b64_decode
+    if "control_image" in gen_params:
+        b64_decode = time.perf_counter()
+        gen_params["control_image"] = prepare_image_field(gen_params["control_image"])
+        img_decode_time += time.perf_counter() - b64_decode
+
+    refiner_params = copy.deepcopy(gen_params)
+    if refiner_pipe is not None:
+        if "denoising_start" in gen_params:
+            refiner_params["denoising_start"] = gen_params["denoising_start"]
+            del gen_params["denoising_start"]
+            gen_params["output_type"] = "latent"
 
     # Manage safety checker preferences
     if params.safety_checker and hasattr(pipe, "safety_checker"):
@@ -125,6 +144,9 @@ async def generate(params: GenerateParams):
     try:
         gen_start = time.perf_counter()
         images = pipe(**gen_params).images
+        if refiner_pipe is not None:
+            refiner_params["image"] = images
+            images = refiner_pipe(**refiner_params).images
         stop = time.perf_counter()
         print(f"Generated {len(images)} images in {stop - gen_start} seconds")
         # if we're returning images, then we need to encode them as base64
