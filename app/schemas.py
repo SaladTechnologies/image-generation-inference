@@ -19,6 +19,13 @@ class PipelineOptions(Enum):
     StableDiffusionXLPipeline = "StableDiffusionXLPipeline"
     StableDiffusionXLImg2ImgPipeline = "StableDiffusionXLImg2ImgPipeline"
     StableDiffusionXLInpaintPipeline = "StableDiffusionXLInpaintPipeline"
+    StableDiffusionXLControlNetPipeline = "StableDiffusionXLControlNetPipeline"
+    StableDiffusionXLControlNetImg2ImgPipeline = (
+        "StableDiffusionXLControlNetImg2ImgPipeline"
+    )
+    StableDiffusionXLControlNetInpaintPipeline = (
+        "StableDiffusionXLControlNetInpaintPipeline"
+    )
 
 
 prompt_field = Field(
@@ -329,6 +336,43 @@ class StableDiffusionXLInpaintPipelineParams(
     clip_skip: Optional[int] = clip_skip_field
 
 
+class StableDiffusionXLControlNetPipelineParams(
+    BaseSDXLParams, InputDimensions, ControlNetInputs
+):
+    """
+    Parameters for the Stable Diffusion XL ControlNet pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/controlnet_sdxl#diffusers.StableDiffusionXLControlNetPipeline)
+    """
+
+    image: Union[str, list[str]] = control_image_field
+    clip_skip: Optional[int] = clip_skip_field
+
+
+class StableDiffusionXLControlNetImg2ImgPipelineParams(
+    BaseSDXLParams, InputDimensions, ControlNetInputs, ImageInputs
+):
+    """
+    Parameters for the Stable Diffusion XL ControlNet Image to Image pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/controlnet_sdxl#diffusers.StableDiffusionXLControlNetImg2ImgPipeline)
+    """
+
+    control_image: Union[str, list[str]] = control_image_field
+    aesthetic_score: Optional[float] = aeshtetic_score_field
+    negative_aesthetic_score: Optional[float] = negative_aesthetic_score_field
+    clip_skip: Optional[int] = clip_skip_field
+
+
+class StableDiffusionXLControlNetInpaintPipelineParams(
+    BaseSDXLParams, InputDimensions, ImageInputs
+):
+    """
+    Parameters for the Stable Diffusion XL ControlNet Inpainting pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/controlnet_sdxl#diffusers.StableDiffusionXLControlNetInpaintPipeline)
+    """
+
+    mask_image: Union[str, list[str]] = mask_image_field
+    aesthetic_score: Optional[float] = aeshtetic_score_field
+    negative_aesthetic_score: Optional[float] = negative_aesthetic_score_field
+    clip_skip: Optional[int] = clip_skip_field
+
+
 AllParameters = Union[
     StableDiffusionPipelineParams,
     StableDiffusionImg2ImgPipelineParams,
@@ -339,6 +383,9 @@ AllParameters = Union[
     StableDiffusionXLPipelineParams,
     StableDiffusionXLImg2ImgPipelineParams,
     StableDiffusionXLInpaintPipelineParams,
+    StableDiffusionXLControlNetPipelineParams,
+    StableDiffusionControlNetImg2ImgPipelineParams,
+    StableDiffusionXLControlNetInpaintPipelineParams,
 ]
 
 
@@ -416,6 +463,27 @@ class GenerateStableDiffusionXLInpaintRequest(BaseGenerateRequest):
     refiner_model: Optional[str] = None
 
 
+class GenerateStableDiffusionXLControlNetRequest(BaseGenerateRequest):
+    parameters: StableDiffusionXLControlNetPipelineParams
+    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_model: Optional[str] = None
+    control_model: Optional[Union[str, list[str]]] = None
+
+
+class GenerateStableDiffusionXLControlNetImg2ImgRequest(BaseGenerateRequest):
+    parameters: StableDiffusionXLControlNetImg2ImgPipelineParams
+    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_model: Optional[str] = None
+    control_model: Optional[Union[str, list[str]]] = None
+
+
+class GenerateStableDiffusionXLControlNetInpaintRequest(BaseGenerateRequest):
+    parameters: StableDiffusionXLControlNetInpaintPipelineParams
+    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_model: Optional[str] = None
+    control_model: Optional[Union[str, list[str]]] = None
+
+
 class GenerateMetadata(BaseModel):
     model_load_time: float
     generation_time: float
@@ -436,9 +504,13 @@ class GenerateResponse(BaseModel):
         GenerateStableDiffusionInpaintRequest,
         GenerateStableDiffusionControlNetRequest,
         GenerateStableDiffusionControlNetImg2ImgRequest,
+        GenerateStableDiffusionControlNetInpaintRequest,
         GenerateStableDiffusionXLRequest,
         GenerateStableDiffusionXLImg2ImgRequest,
         GenerateStableDiffusionXLInpaintRequest,
+        GenerateStableDiffusionXLControlNetRequest,
+        GenerateStableDiffusionXLControlNetImg2ImgRequest,
+        GenerateStableDiffusionXLControlNetInpaintRequest,
     ]
     meta: GenerateMetadata
 

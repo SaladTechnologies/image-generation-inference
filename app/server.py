@@ -33,6 +33,9 @@ from schemas import (
     GenerateStableDiffusionXLRequest,
     GenerateStableDiffusionXLImg2ImgRequest,
     GenerateStableDiffusionXLInpaintRequest,
+    GenerateStableDiffusionXLControlNetRequest,
+    GenerateStableDiffusionXLControlNetImg2ImgRequest,
+    GenerateStableDiffusionXLControlNetInpaintRequest,
 )
 
 import config
@@ -160,6 +163,48 @@ async def generate_with_stable_diffusion_xl_inpaint_pipeline(
 ):
     return await generate_images_common(
         params, background_tasks, PipelineOptions.StableDiffusionXLInpaintPipeline
+    )
+
+
+@app.post(
+    "/generate/StableDiffusionXLControlNetPipeline", response_model=GenerateResponse
+)
+async def generate_with_stable_diffusion_xl_controlnet_pipeline(
+    params: GenerateStableDiffusionXLControlNetRequest,
+    background_tasks: BackgroundTasks,
+):
+    return await generate_images_common(
+        params, background_tasks, PipelineOptions.StableDiffusionXLControlNetPipeline
+    )
+
+
+@app.post(
+    "/generate/StableDiffusionXLControlNetImg2ImgPipeline",
+    response_model=GenerateResponse,
+)
+async def generate_with_stable_diffusion_xl_controlnet_img2img_pipeline(
+    params: GenerateStableDiffusionXLControlNetImg2ImgRequest,
+    background_tasks: BackgroundTasks,
+):
+    return await generate_images_common(
+        params,
+        background_tasks,
+        PipelineOptions.StableDiffusionXLControlNetImg2ImgPipeline,
+    )
+
+
+@app.post(
+    "/generate/StableDiffusionXLControlNetInpaintPipeline",
+    response_model=GenerateResponse,
+)
+async def generate_with_stable_diffusion_xl_controlnet_inpaint_pipeline(
+    params: GenerateStableDiffusionXLControlNetInpaintRequest,
+    background_tasks: BackgroundTasks,
+):
+    return await generate_images_common(
+        params,
+        background_tasks,
+        PipelineOptions.StableDiffusionXLControlNetInpaintPipeline,
     )
 
 
