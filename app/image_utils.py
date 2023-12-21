@@ -42,3 +42,5 @@ async def store_image(image: Image, name: str):
         filepath = config.image_dir + "/" + name + ".jpg"
         image.save(filepath)
         await image_stored({"image": filepath})
+    elif config.image_storage_strategy == "post":
+        await image_stored({"image": pil_to_b64(image)})

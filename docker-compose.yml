@@ -18,4 +18,4 @@ services:
               count: 1
               capabilities: [ gpu ]
     environment:
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
