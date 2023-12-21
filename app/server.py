@@ -24,16 +24,26 @@ from schemas import (
     ModelListFilters,
     LoadCheckpointParams,
     SystemPerformance,
-    GenerateStableDiffusionParams,
+    GenerateStableDiffusionRequest,
     GenerateResponse,
     PipelineOptions,
+    GenerateStableDiffusionImg2ImgRequest,
+    GenerateStableDiffusionInpaintRequest,
+    GenerateStableDiffusionControlNetRequest,
+    GenerateStableDiffusionControlNetImg2ImgRequest,
 )
 
 import config
 from monitoring import get_detailed_system_performance
 import uuid
 import webhooks
-from generate import get_pipes, prepare_parameters, handle_images, run_async
+from generate import (
+    get_pipes,
+    prepare_parameters,
+    handle_images,
+    run_async,
+    generate_images_common,
+)
 
 if config.launch_ckpt is not None or config.launch_vae is not None:
     logging.info("Preloading checkpoint %s", config.launch_ckpt)
@@ -57,111 +67,60 @@ async def system_stats():
 
 @app.post("/generate", response_model=GenerateResponse)
 async def generate(params: GenerateRequest, background_tasks: BackgroundTasks):
-    if params.batch_id is None:
-        params.batch_id = str(uuid.uuid4())
-    start = time.perf_counter()
-    pipe, refiner_pipe = get_pipes(
-        checkpoint=params.checkpoint,
-        pipeline=params.pipeline,
-        vae=params.vae,
-        control_model=params.control_model,
-        refiner=params.refiner,
-        scheduler=params.scheduler,
-        a1111_scheduler=params.a1111_scheduler,
-        safety_checker=params.safety_checker,
-    )
-    pipe_loaded = time.perf_counter()
-
-    gen_params, refiner_params, img_decode_time = prepare_parameters(
-        params.parameters, params.refiner_parameters
-    )
-
-    try:
-        gen_start = time.perf_counter()
-        images = pipe(**gen_params).images
-        if refiner_pipe is not None:
-            refiner_params["image"] = images
-            images = refiner_pipe(**refiner_params).images
-        stop = time.perf_counter()
-        logging.info("Generated %d images in %s seconds", len(images), stop - gen_start)
-        images = handle_images(
-            params.batch_id,
-            images,
-            background_tasks,
-            store_images=params.store_images,
-            return_images=params.return_images,
-        )
-        b64_stop = time.perf_counter()
-        return {
-            "images": images,
-            "inputs": params.model_dump(),
-            "meta": {
-                "model_load_time": pipe_loaded - start,
-                "generation_time": stop - gen_start,
-                "b64_encoding_time": b64_stop - stop + img_decode_time,
-                "total_time": b64_stop - start,
-            },
-        }
-    except Exception as e:
-        logging.exception(e)
-        # Return a 500 if something goes wrong
-        return Response(
-            json.dumps({"error": str(e)}),
-            status_code=500,
-            media_type="application/json",
-        )
+    return await generate_images_common(params, background_tasks, params.pipeline)
 
 
 @app.post("/generate/StableDiffusionPipeline", response_model=GenerateResponse)
 async def generate_with_stable_diffusion_pipeline(
-    params: GenerateStableDiffusionParams, background_tasks: BackgroundTasks
+    params: GenerateStableDiffusionRequest, background_tasks: BackgroundTasks
 ):
-    if params.batch_id is None:
-        params.batch_id = str(uuid.uuid4())
-    start = time.perf_counter()
-    pipe, _ = get_pipes(
-        checkpoint=params.checkpoint,
-        pipeline=PipelineOptions.StableDiffusionPipeline,
-        vae=params.vae,
-        scheduler=params.scheduler,
-        a1111_scheduler=params.a1111_scheduler,
-        safety_checker=params.safety_checker,
+    return await generate_images_common(
+        params, background_tasks, PipelineOptions.StableDiffusionPipeline
     )
-    pipe_loaded = time.perf_counter()
 
-    gen_params, _, img_decode_time = prepare_parameters(params.parameters)
 
-    try:
-        gen_start = time.perf_counter()
-        images = pipe(**gen_params).images
-        stop = time.perf_counter()
-        logging.info("Generated %d images in %s seconds", len(images), stop - gen_start)
-        images = handle_images(
-            params.batch_id,
-            images,
-            background_tasks,
-            store_images=params.store_images,
-            return_images=params.return_images,
-        )
-        b64_stop = time.perf_counter()
-        return {
-            "images": images,
-            "inputs": params.model_dump(),
-            "meta": {
-                "model_load_time": pipe_loaded - start,
-                "generation_time": stop - gen_start,
-                "b64_encoding_time": b64_stop - stop + img_decode_time,
-                "total_time": b64_stop - start,
-            },
-        }
-    except Exception as e:
-        logging.exception(e)
-        # Return a 500 if something goes wrong
-        return Response(
-            json.dumps({"error": str(e)}),
-            status_code=500,
-            media_type="application/json",
-        )
+@app.post("/generate/StableDiffusionImg2ImgPipeline", response_model=GenerateResponse)
+async def generate_with_stable_diffusion_img2img_pipeline(
+    params: GenerateStableDiffusionImg2ImgRequest, background_tasks: BackgroundTasks
+):
+    return await generate_images_common(
+        params, background_tasks, PipelineOptions.StableDiffusionImg2ImgPipeline
+    )
+
+
+@app.post("/generate/StableDiffusionInpaintPipeline", response_model=GenerateResponse)
+async def generate_with_stable_diffusion_inpaint_pipeline(
+    params: GenerateStableDiffusionInpaintRequest, background_tasks: BackgroundTasks
+):
+    return await generate_images_common(
+        params, background_tasks, PipelineOptions.StableDiffusionInpaintPipeline
+    )
+
+
+@app.post(
+    "/generate/StableDiffusionControlNetPipeline", response_model=GenerateResponse
+)
+async def generate_with_stable_diffusion_controlnet_pipeline(
+    params: GenerateStableDiffusionControlNetRequest, background_tasks: BackgroundTasks
+):
+    return await generate_images_common(
+        params, background_tasks, PipelineOptions.StableDiffusionControlNetPipeline
+    )
+
+
+@app.post(
+    "/generate/StableDiffusionControlNetImg2ImgPipeline",
+    response_model=GenerateResponse,
+)
+async def generate_with_stable_diffusion_controlnet_img2img_pipeline(
+    params: GenerateStableDiffusionControlNetImg2ImgRequest,
+    background_tasks: BackgroundTasks,
+):
+    return await generate_images_common(
+        params,
+        background_tasks,
+        PipelineOptions.StableDiffusionControlNetImg2ImgPipeline,
+    )
 
 
 @app.post("/load/checkpoint", response_model=list[str])

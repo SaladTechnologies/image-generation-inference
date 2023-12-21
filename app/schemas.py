@@ -430,38 +430,54 @@ AllParameters = Union[
 ]
 
 
-class GenerateRequest(BaseModel):
+class BaseGenerateRequest(BaseModel):
     batch_id: Optional[str] = batch_id_field
+    checkpoint: str = checkpoint_field
+    scheduler: Optional[str] = scheduler_field
+    a1111_scheduler: Optional[str] = a1111_scheduler_field
+    vae: Optional[str] = vae_field
+    return_images: Optional[bool] = return_images_field
+    store_images: Optional[bool] = store_images_field
+
+    class Config:
+        extra = Extra.forbid
+
+
+class GenerateRequest(BaseGenerateRequest):
     pipeline: Optional[PipelineOptions] = pipeline_field
     checkpoint: str = checkpoint_field
     refiner: Optional[str] = None
     control_model: Optional[Union[str, list[str]]] = None
-    scheduler: Optional[str] = scheduler_field
-    a1111_scheduler: Optional[str] = a1111_scheduler_field
     safety_checker: Optional[bool] = config.load_safety_checker
-    vae: Optional[str] = vae_field
     parameters: AllParameters
     refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
-    return_images: Optional[bool] = return_images_field
-    store_images: Optional[bool] = store_images_field
-
-    class Config:
-        extra = Extra.forbid
 
 
-class GenerateStableDiffusionParams(BaseModel):
-    batch_id: Optional[str] = batch_id_field
-    checkpoint: str = checkpoint_field
-    scheduler: Optional[str] = scheduler_field
-    a1111_scheduler: Optional[str] = a1111_scheduler_field
-    vae: Optional[str] = vae_field
+class GenerateStableDiffusionRequest(BaseGenerateRequest):
     safety_checker: Optional[bool] = config.load_safety_checker
     parameters: StableDiffusionPipelineParams
-    return_images: Optional[bool] = return_images_field
-    store_images: Optional[bool] = store_images_field
 
-    class Config:
-        extra = Extra.forbid
+
+class GenerateStableDiffusionImg2ImgRequest(BaseGenerateRequest):
+    safety_checker: Optional[bool] = config.load_safety_checker
+    parameters: StableDiffusionImg2ImgPipelineParams
+
+
+class GenerateStableDiffusionInpaintRequest(BaseGenerateRequest):
+    safety_checker: Optional[bool] = config.load_safety_checker
+    parameters: StableDiffusionInpaintPipelineParams
+
+
+class GenerateStableDiffusionControlNetRequest(BaseGenerateRequest):
+    control_model: Optional[Union[str, list[str]]] = None
+    safety_checker: Optional[bool] = config.load_safety_checker
+    parameters: StableDiffusionControlNetPipelineParams
+
+
+class GenerateStableDiffusionControlNetImg2ImgRequest(BaseGenerateRequest):
+    control_model: Optional[Union[str, list[str]]] = None
+    safety_checker: Optional[bool] = config.load_safety_checker
+    parameters: StableDiffusionControlNetImg2ImgPipelineParams
 
 
 class GenerateMetadata(BaseModel):
@@ -477,7 +493,14 @@ class GenerateMetadata(BaseModel):
 
 class GenerateResponse(BaseModel):
     images: list[str]
-    inputs: Union[GenerateRequest, GenerateStableDiffusionParams]
+    inputs: Union[
+        GenerateRequest,
+        GenerateStableDiffusionRequest,
+        GenerateStableDiffusionImg2ImgRequest,
+        GenerateStableDiffusionInpaintRequest,
+        GenerateStableDiffusionControlNetRequest,
+        GenerateStableDiffusionControlNetImg2ImgRequest,
+    ]
     meta: GenerateMetadata
 
     class Config:

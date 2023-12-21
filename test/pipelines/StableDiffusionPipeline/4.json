@@ -5,7 +5,7 @@
   "return_images": false,
   "store_images": true,
   "parameters": {
-    "prompt": "simple cat logo",
+    "prompt": "cat",
     "num_inference_steps": 15,
     "num_images_per_prompt": 2,
     "guidance_scale": 8,
