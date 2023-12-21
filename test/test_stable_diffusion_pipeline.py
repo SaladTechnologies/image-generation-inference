@@ -25,10 +25,10 @@ def b64_to_pil(image: str) -> Image.Image:
 api_url = "http://localhost:1234"
 
 
-class StableDiffusionPipelineTest(unittest.TestCase):
+class StableDiffusion15Test(unittest.TestCase):
     pipeline = "StableDiffusionPipeline"
 
-    def test_sd_1_5_batch_1_a1111_safe(self):
+    def test_batch_1_a1111_safe(self):
         """
         Test stable diffusion pipeline with a 1.5 finetune, batch size 1,
         a1111 scheduler alias, safety checker
@@ -56,7 +56,7 @@ class StableDiffusionPipelineTest(unittest.TestCase):
         image = b64_to_pil(response_body["images"][0])
         self.assertEqual(image.size, (512, 512))
 
-    def test_sd_1_5_batch_1_a1111_unsafe(self):
+    def test_batch_1_a1111_unsafe(self):
         """
         Test stable diffusion pipeline with a 1.5 finetune, batch size 1,
         a1111 scheduler alias, no safety checker
@@ -87,7 +87,7 @@ class StableDiffusionPipelineTest(unittest.TestCase):
         # image is not all black
         self.assertTrue(image.getbbox())
 
-    def test_sd_1_5_batch_1_scheduler(self):
+    def test_batch_1_scheduler(self):
         """
         Test stable diffusion pipeline with a 1.5 finetune, batch size 1,
         euler scheduler, no a1111 alias
@@ -117,7 +117,7 @@ class StableDiffusionPipelineTest(unittest.TestCase):
         # image is not all black
         self.assertTrue(image.getbbox())
 
-    def test_sd_1_5_batch_2_scheduler(self):
+    def test_batch_2_scheduler(self):
         """
         Test stable diffusion pipeline with a 1.5 finetune, batch size 2,
         euler scheduler, no a1111 alias
@@ -154,7 +154,7 @@ class StableDiffusionPipelineTest(unittest.TestCase):
         self.assertTrue(image1.getbbox())
         self.assertTrue(image2.getbbox())
 
-    def test_sd_1_5_diff_dimensions(self):
+    def test_diff_dimensions(self):
         """
         Test stable diffusion pipeline with a 1.5 finetune, batch size 1,
         euler scheduler, no a1111 alias, different dimensions
