@@ -40,6 +40,67 @@ Additionally:
 - SDXL 1.0
 - SDXL Turbo
 
+## Webhooks
+
+IGI emits webhooks for various events. The webhook URLs can be configured via environment variables. All webhooks include the following fields:
+
+```json
+{
+  "event": "event.name",
+  "node_info": {
+    "identity": {
+      "salad_machine_id": "string",
+      "salad_container_group_id": "string"
+    },
+    "system_stats": {
+      "cpu": {
+        "utilization": [
+          0
+        ],
+        "frequency": [
+          {
+            "current": 0,
+            "min": 0,
+            "max": 0
+          }
+        ]
+      },
+      "memory": {
+        "total": 0,
+        "available": 0,
+        "percent": 0,
+        "used": 0,
+        "free": 0
+      },
+      "storage": {
+        "used": 0,
+        "free": 0
+      },
+      "gpu": [
+        {
+          "id": 0,
+          "name": "string",
+          "load": 0,
+          "free_memory": 0,
+          "used_memory": 0,
+          "total_memory": 0,
+          "temperature": 0
+        }
+      ],
+      "packages": {
+        "torch": "string",
+        "cuda": "string",
+        "xformers": "string",
+        "triton": "string",
+        "diffusers": "string",
+        "transformers": "string",
+        "stable_fast": "string"
+      }
+    }
+  }
+}
+```
+
 ## Environment Variables
 
 | Environment Variable       | Default Value        | Description                                                           |
@@ -61,3 +122,29 @@ Additionally:
 | `SALAD_CONTAINER_GROUP_ID` | `None`               | Identifier for the Salad container group.                             |
 | `MAX_DATA_DIR_SIZE_GB`     | `0`                  | Maximum size for the data directory, in gigabytes.                    |
 | `LOG_LEVEL`                | `info`               | Log level for the service.                                            |
+
+### Storage Strategies
+
+#### Disk
+
+The disk storage strategy stores images on disk. This is the default strategy. Images will only be stored when a generation request includes `{"store_images": true}`. The images will be stored in the directory specified by the `IMAGE_DIR` environment variable. The `image.stored` event will be sent to the `WEBHOOK_IMAGE_STORED` webhook URL via POST, with a payload of the form:
+
+```
+{
+  "image": "/data/images/sdfasdfasdfasdf.jpg",
+  "event": "image.stored",
+  ...
+}
+```
+
+#### Post
+
+The post storage strategy sends images to the `WEBHOOK_IMAGE_STORED` webhook URL via POST. Images will only be stored when a generation request includes `{"store_images": true}`. The `image.stored` event will be sent to the `WEBHOOK_IMAGE_STORED` webhook URL via POST, with a payload of the form:
+
+```
+{
+  "image": "base64-encoded-image-string"
+  "event": "image.stored",
+  ...
+}
+```
