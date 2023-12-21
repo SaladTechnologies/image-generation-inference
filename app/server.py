@@ -1,9 +1,12 @@
 import logging
+import os
 
-logging.basicConfig(level=logging.INFO)
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+log_level = getattr(logging, log_level)
+
+logging.basicConfig(level=log_level)
 
 import time
-import os
 import sys
 import torch
 from fastapi import FastAPI, Response, Depends, BackgroundTasks
@@ -28,6 +31,7 @@ import config
 from monitoring import get_detailed_system_performance
 import uuid
 import asyncio
+import webhooks
 
 if config.launch_ckpt is not None or config.launch_vae is not None:
     logging.info("Preloading checkpoint %s", config.launch_ckpt)
@@ -237,6 +241,18 @@ def restart_server():
 def restart(background_tasks: BackgroundTasks):
     # Return a 202 to indicate that the request has been accepted for processing,
     # but the processing has not been completed.
+    for checkpoint in list_loaded_checkpoints():
+        background_tasks.add_task(
+            run_async, webhooks.model_unloaded, {"checkpoint": checkpoint}
+        )
+    for vae in list_local_vae():
+        background_tasks.add_task(run_async, webhooks.model_unloaded, {"vae": vae})
+    for controlnet in list_local_controlnet():
+        background_tasks.add_task(
+            run_async, webhooks.model_unloaded, {"controlnet": controlnet}
+        )
+    for lora in list_local_lora():
+        background_tasks.add_task(run_async, webhooks.model_unloaded, {"lora": lora})
     background_tasks.add_task(restart_server)
     return Response(status_code=202)
 

@@ -12,6 +12,9 @@ import huggingface_hub
 import config
 from compel import Compel, ReturnedEmbeddingsType
 import logging
+import webhooks
+import asyncio
+import threading
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
@@ -34,6 +37,17 @@ loaded_checkpoints = {}
 loaded_vae = {}
 loaded_lora = {}
 loaded_controlnet = {}
+
+
+def run_asyncio_coroutine(coroutine):
+    def run():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(coroutine)
+        loop.close()
+
+    thread = threading.Thread(target=run)
+    thread.start()
 
 
 def load_checkpoint(
@@ -201,6 +215,7 @@ class ModelManager:
         end = time.perf_counter()
         logging.info("Warmed up %s in %.2fs", model_name, end - start)
         self.__pipes__[pipe_type] = pipe
+        run_asyncio_coroutine(webhooks.model_loaded({"checkpoint": model_name}))
 
     def get_safety_checker(self):
         return self.__safety_checker__
@@ -402,5 +417,6 @@ def get_controlnet(model_name: str) -> diffusers.ControlNetModel:
         end = time.perf_counter()
         logging.info("Compiled %s in %.2fs", model_name, end - start)
         loaded_controlnet[model_name] = controlnet
+        run_asyncio_coroutine(webhooks.model_loaded({"controlnet": model_name}))
 
     return loaded_controlnet[model_name]

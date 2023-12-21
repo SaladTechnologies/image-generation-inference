@@ -18,4 +18,4 @@ services:
               count: 1
               capabilities: [ gpu ]
     environment:
-      CIVITAI_MODEL_VERSION_IDS: 122143
+      LOG_LEVEL: debug

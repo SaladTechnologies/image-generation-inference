@@ -52,7 +52,7 @@ Additionally:
 | `PORT`                     | `1234`               | The port number for the service.                                      |
 | `LAUNCH_CHECKPOINT`        | `None`               | Path to a specific checkpoint to launch.                              |
 | `LAUNCH_VAE`               | `None`               | Path to a specific VAE to launch.                                     |
-| `IMAGE_STORAGE_STRATEGY`   | `disk`               | Strategy for storing images (e.g., 'disk', 's3').                     |
+| `IMAGE_STORAGE_STRATEGY`   | `disk`               | Strategy for storing images (e.g., 'disk', 'post').                   |
 | `WEBHOOK_MODEL_LOADED`     | `None`               | Webhook URL for model loaded event.                                   |
 | `WEBHOOK_MODEL_UNLOADED`   | `None`               | Webhook URL for model unloaded event.                                 |
 | `WEBHOOK_IMAGE_GENERATED`  | `None`               | Webhook URL for image generated event.                                |
@@ -60,3 +60,4 @@ Additionally:
 | `SALAD_MACHINE_ID`         | `None`               | Identifier for the Salad machine.                                     |
 | `SALAD_CONTAINER_GROUP_ID` | `None`               | Identifier for the Salad container group.                             |
 | `MAX_DATA_DIR_SIZE_GB`     | `0`                  | Maximum size for the data directory, in gigabytes.                    |
+| `LOG_LEVEL`                | `info`               | Log level for the service.                                            |
