@@ -6,10 +6,8 @@ log_level = getattr(logging, log_level)
 
 logging.basicConfig(level=log_level)
 
-import time
 import sys
 from fastapi import FastAPI, Response, Depends, BackgroundTasks
-import json
 import uvicorn
 from models import (
     get_checkpoint,
