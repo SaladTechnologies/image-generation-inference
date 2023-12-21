@@ -12,6 +12,9 @@ class PipelineOptions(Enum):
     StableDiffusionControlNetImg2ImgPipeline = (
         "StableDiffusionControlNetImg2ImgPipeline"
     )
+    StableDiffusionControlNetInpaintPipeline = (
+        "StableDiffusionControlNetInpaintPipeline"
+    )
 
     StableDiffusionXLPipeline = "StableDiffusionXLPipeline"
     StableDiffusionXLImg2ImgPipeline = "StableDiffusionXLImg2ImgPipeline"
@@ -180,242 +183,150 @@ store_images_field = Field(
 )
 
 
-class StableDiffusionPipelineParams(BaseModel):
+class BaseStableDiffusionParams(BaseModel):
+    prompt: Union[str, list[str]] = prompt_field
+    num_inference_steps: Optional[int] = num_inference_steps_field
+    timesteps: Optional[list[int]] = timesteps_field
+    guidance_scale: Optional[float] = guidance_scale_field
+    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
+    num_images_per_prompt: Optional[int] = num_images_per_prompt_field
+    eta: Optional[float] = eta_field
+    seed: Optional[Union[int, list[int]]] = seed_field
+
+    class Config:
+        extra = Extra.forbid
+
+
+class InputDimensions(BaseModel):
+    height: Optional[int] = height_field
+    width: Optional[int] = width_field
+
+
+class ImageInputs(BaseModel):
+    image: Union[str, list[str]] = image_field
+    strength: Optional[float] = strength_field
+
+
+class ControlNetInputs(BaseModel):
+    controlnet_conditioning_scale: Optional[
+        Union[float, list[float]]
+    ] = controlnet_conditioning_scale_field
+    guess_mode: Optional[bool] = guess_mode_field
+    control_guidance_start: Optional[
+        Union[float, list[float]]
+    ] = control_guidance_start_field
+    control_guidance_end: Optional[
+        Union[float, list[float]]
+    ] = control_guidance_end_field
+
+
+class BaseSDXLParams(BaseStableDiffusionParams):
+    prompt_2: Optional[Union[str, list[str]]] = prompt_2_field
+    negative_prompt_2: Optional[Union[str, list[str]]] = negative_prompt_2_field
+    denoising_end: Optional[float] = denoising_end_field
+    original_size: Optional[tuple[int, int]] = original_size_field
+    crops_coords_top_left: Optional[tuple[int, int]] = crops_coords_top_left_field
+    target_size: Optional[tuple[int, int]] = target_size_field
+    negative_original_size: Optional[tuple[int, int]] = negative_original_size_field
+    negative_crops_coords_top_left: Optional[
+        tuple[int, int]
+    ] = negative_crops_coords_top_left_field
+    negative_target_size: Optional[tuple[int, int]] = negative_target_size_field
+    guidance_rescale: Optional[float] = guidance_rescale_field
+
+
+class StableDiffusionPipelineParams(BaseStableDiffusionParams, InputDimensions):
     """
     Parameters for the Stable Diffusion pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/text2img#diffusers.StableDiffusionPipeline)
     """
 
-    prompt: Union[str, list[str]] = prompt_field
-    height: Optional[int] = height_field
-    width: Optional[int] = width_field
-    num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[list[int]] = timesteps_field
-    guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
-    num_images_per_prompt: Optional[int] = num_images_per_prompt_field
-    eta: Optional[float] = eta_field
-    seed: Optional[Union[int, list[int]]] = seed_field
     guidance_rescale: Optional[float] = guidance_rescale_field
     clip_skip: Optional[int] = clip_skip_field
 
-    class Config:
-        extra = Extra.forbid
 
-
-class StableDiffusionImg2ImgPipelineParams(BaseModel):
+class StableDiffusionImg2ImgPipelineParams(BaseStableDiffusionParams, ImageInputs):
     """
     Parameters for the Stable Diffusion Image to Image pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/img2img#diffusers.StableDiffusionImg2ImgPipeline)
     """
 
-    prompt: Union[str, list[str]] = prompt_field
-    image: Union[str, list[str]] = image_field
-    strength: Optional[float] = strength_field
-    num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[list[int]] = timesteps_field
-    guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
-    num_images_per_prompt: Optional[int] = num_images_per_prompt_field
-    eta: Optional[float] = eta_field
-    seed: Optional[Union[int, list[int]]] = seed_field
     clip_skip: Optional[int] = clip_skip_field
 
-    class Config:
-        extra = Extra.forbid
 
-
-class StableDiffusionInpaintPipelineParams(BaseModel):
+class StableDiffusionInpaintPipelineParams(
+    BaseStableDiffusionParams, ImageInputs, InputDimensions
+):
     """
     Parameters for the Stable Diffusion Inpainting pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/inpaint#diffusers.StableDiffusionInpaintPipeline)
     """
 
-    prompt: Union[str, list[str]] = prompt_field
-    image: Union[str, list[str]] = image_field
     mask_image: Union[str, list[str]] = mask_image_field
-    height: Optional[int] = height_field
-    width: Optional[int] = width_field
-    strength: Optional[float] = strength_field
-    num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[list[int]] = timesteps_field
-    guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
-    num_images_per_prompt: Optional[int] = num_images_per_prompt_field
-    eta: Optional[float] = eta_field
-    seed: Optional[Union[int, list[int]]] = seed_field
     clip_skip: Optional[int] = clip_skip_field
 
-    class Config:
-        extra = Extra.forbid
 
-
-class StableDiffusionControlNetPipelineParams(BaseModel):
+class StableDiffusionControlNetPipelineParams(
+    BaseStableDiffusionParams, InputDimensions, ControlNetInputs
+):
     """
     Parameters for the Stable Diffusion ControlNet pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/controlnet#diffusers.StableDiffusionControlNetPipeline)
     """
 
-    prompt: Union[str, list[str]] = prompt_field
     image: Union[str, list[str]] = control_image_field
-    height: Optional[int] = height_field
-    width: Optional[int] = width_field
-    num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[list[int]] = timesteps_field
-    guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
-    num_images_per_prompt: Optional[int] = num_images_per_prompt_field
-    eta: Optional[float] = eta_field
-    seed: Optional[Union[int, list[int]]] = seed_field
-    controlnet_conditioning_scale: Optional[
-        Union[float, list[float]]
-    ] = controlnet_conditioning_scale_field
-    guess_mode: Optional[bool] = guess_mode_field
-    control_guidance_start: Optional[
-        Union[float, list[float]]
-    ] = control_guidance_start_field
-    control_guidance_end: Optional[
-        Union[float, list[float]]
-    ] = control_guidance_end_field
     clip_skip: Optional[int] = clip_skip_field
 
-    class Config:
-        extra = Extra.forbid
 
-
-class StableDiffusionControlNetImg2ImgPipelineParams(BaseModel):
+class StableDiffusionControlNetImg2ImgPipelineParams(
+    BaseStableDiffusionParams, InputDimensions, ControlNetInputs
+):
     """
     Parameters for the Stable Diffusion ControlNet Image to Image pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/controlnet#diffusers.StableDiffusionControlNetImg2ImgPipeline)
     """
 
-    prompt: Union[str, list[str]] = prompt_field
     image: Union[str, list[str]] = image_field
     control_image: Union[str, list[str]] = control_image_field
-    height: Optional[int] = height_field
-    width: Optional[int] = width_field
-    num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[list[int]] = timesteps_field
-    guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
-    num_images_per_prompt: Optional[int] = num_images_per_prompt_field
-    eta: Optional[float] = eta_field
-    seed: Optional[Union[int, list[int]]] = seed_field
-    controlnet_conditioning_scale: Optional[
-        Union[float, list[float]]
-    ] = controlnet_conditioning_scale_field
-    guess_mode: Optional[bool] = guess_mode_field
-    control_guidance_start: Optional[
-        Union[float, list[float]]
-    ] = control_guidance_start_field
-    control_guidance_end: Optional[
-        Union[float, list[float]]
-    ] = control_guidance_end_field
     clip_skip: Optional[int] = clip_skip_field
 
-    class Config:
-        extra = Extra.forbid
+
+class StableDiffusionControlNetInpaintPipelineParams(
+    BaseStableDiffusionParams, ImageInputs, InputDimensions, ControlNetInputs
+):
+    """
+    Parameters for the Stable Diffusion ControlNet Inpainting pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/controlnet#diffusers.StableDiffusionControlNetInpaintPipeline)
+    """
+
+    mask_image: Union[str, list[str]] = mask_image_field
+    control_image: Union[str, list[str]] = control_image_field
+    clip_skip: Optional[int] = clip_skip_field
 
 
-class StableDiffusionXLPipelineParams(BaseModel):
+class StableDiffusionXLPipelineParams(BaseSDXLParams, InputDimensions):
     """
     Parameters for the Stable Diffusion XL pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/stable_diffusion_xl#diffusers.StableDiffusionXLPipeline)
     """
 
-    prompt: Union[str, list[str]] = prompt_field
-    prompt_2: Optional[Union[str, list[str]]] = prompt_2_field
-    height: Optional[int] = height_field
-    width: Optional[int] = width_field
-    num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[list[int]] = timesteps_field
-    denoising_end: Optional[float] = denoising_end_field
-    guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
-    negative_prompt_2: Optional[Union[str, list[str]]] = negative_prompt_2_field
-    num_images_per_prompt: Optional[int] = num_images_per_prompt_field
-    eta: Optional[float] = eta_field
-    seed: Optional[Union[int, list[int]]] = seed_field
-    guidance_rescale: Optional[float] = guidance_rescale_field
-    original_size: Optional[tuple[int, int]] = original_size_field
-    crops_coords_top_left: Optional[tuple[int, int]] = crops_coords_top_left_field
-    target_size: Optional[tuple[int, int]] = target_size_field
-    negative_original_size: Optional[tuple[int, int]] = negative_original_size_field
-    negative_crops_coords_top_left: Optional[
-        tuple[int, int]
-    ] = negative_crops_coords_top_left_field
-    negative_target_size: Optional[tuple[int, int]] = negative_target_size_field
 
-    class Config:
-        extra = Extra.forbid
-
-
-class StableDiffusionXLImg2ImgPipelineParams(BaseModel):
+class StableDiffusionXLImg2ImgPipelineParams(BaseSDXLParams, ImageInputs):
     """
     Parameters for the Stable Diffusion XL Image to Image pipeline. [See the diffusers documentation for more details]https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/stable_diffusion_xl#diffusers.StableDiffusionXLImg2ImgPipeline)
     """
 
-    prompt: Union[str, list[str]] = prompt_field
-    prompt_2: Optional[Union[str, list[str]]] = prompt_2_field
-    image: Union[str, list[str]] = image_field
-    strength: Optional[float] = strength_field
-    num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[list[int]] = timesteps_field
     denoising_start: Optional[float] = denoising_start_field
-    denoising_end: Optional[float] = denoising_end_field
-    guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
-    negative_prompt_2: Optional[Union[str, list[str]]] = negative_prompt_2_field
-    num_images_per_prompt: Optional[int] = num_images_per_prompt_field
-    eta: Optional[float] = eta_field
-    seed: Optional[Union[int, list[int]]] = seed_field
-    guidance_rescale: Optional[float] = guidance_rescale_field
-    original_size: Optional[tuple[int, int]] = original_size_field
-    crops_coords_top_left: Optional[tuple[int, int]] = crops_coords_top_left_field
-    target_size: Optional[tuple[int, int]] = target_size_field
-    negative_original_size: Optional[tuple[int, int]] = negative_original_size_field
-    negative_crops_coords_top_left: Optional[
-        tuple[int, int]
-    ] = negative_crops_coords_top_left_field
-    negative_target_size: Optional[tuple[int, int]] = negative_target_size_field
     aesthetic_score: Optional[float] = aeshtetic_score_field
     negative_aesthetic_score: Optional[float] = negative_aesthetic_score_field
     clip_skip: Optional[int] = clip_skip_field
 
-    class Config:
-        extra = Extra.forbid
 
-
-class StableDiffusionXLInpaintPipelineParams(BaseModel):
+class StableDiffusionXLInpaintPipelineParams(
+    BaseSDXLParams, ImageInputs, InputDimensions
+):
     """
     Parameters for the Stable Diffusion XL Inpainting pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/stable_diffusion_xl#diffusers.StableDiffusionXLInpaintPipeline)
     """
 
-    prompt: Union[str, list[str]] = prompt_field
-    prompt_2: Optional[Union[str, list[str]]] = prompt_2_field
-    image: Union[str, list[str]] = image_field
     mask_image: Union[str, list[str]] = mask_image_field
-    height: Optional[int] = height_field
-    width: Optional[int] = width_field
-    strength: Optional[float] = strength_field
-    num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[list[int]] = timesteps_field
     denoising_start: Optional[float] = denoising_start_field
-    denoising_end: Optional[float] = denoising_end_field
-    guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
-    negative_prompt_2: Optional[Union[str, list[str]]] = negative_prompt_2_field
-    num_images_per_prompt: Optional[int] = num_images_per_prompt_field
-    eta: Optional[float] = eta_field
-    seed: Optional[Union[int, list[int]]] = seed_field
-    original_size: Optional[tuple[int, int]] = original_size_field
-    crops_coords_top_left: Optional[tuple[int, int]] = crops_coords_top_left_field
-    target_size: Optional[tuple[int, int]] = target_size_field
-    negative_original_size: Optional[tuple[int, int]] = negative_original_size_field
-    negative_crops_coords_top_left: Optional[
-        tuple[int, int]
-    ] = negative_crops_coords_top_left_field
-    negative_target_size: Optional[tuple[int, int]] = negative_target_size_field
     aesthetic_score: Optional[float] = aeshtetic_score_field
     negative_aesthetic_score: Optional[float] = negative_aesthetic_score_field
     clip_skip: Optional[int] = clip_skip_field
-
-    class Config:
-        extra = Extra.forbid
 
 
 AllParameters = Union[
@@ -424,6 +335,7 @@ AllParameters = Union[
     StableDiffusionInpaintPipelineParams,
     StableDiffusionControlNetPipelineParams,
     StableDiffusionControlNetImg2ImgPipelineParams,
+    StableDiffusionControlNetInpaintPipelineParams,
     StableDiffusionXLPipelineParams,
     StableDiffusionXLImg2ImgPipelineParams,
     StableDiffusionXLInpaintPipelineParams,
@@ -478,6 +390,12 @@ class GenerateStableDiffusionControlNetImg2ImgRequest(BaseGenerateRequest):
     control_model: Optional[Union[str, list[str]]] = None
     safety_checker: Optional[bool] = config.load_safety_checker
     parameters: StableDiffusionControlNetImg2ImgPipelineParams
+
+
+class GenerateStableDiffusionControlNetInpaintRequest(BaseGenerateRequest):
+    control_model: Optional[Union[str, list[str]]] = None
+    safety_checker: Optional[bool] = config.load_safety_checker
+    parameters: StableDiffusionControlNetInpaintPipelineParams
 
 
 class GenerateStableDiffusionXLRequest(BaseGenerateRequest):

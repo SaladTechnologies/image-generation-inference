@@ -22,13 +22,14 @@ from schemas import (
     ModelListFilters,
     LoadCheckpointParams,
     SystemPerformance,
-    GenerateStableDiffusionRequest,
     GenerateResponse,
     PipelineOptions,
+    GenerateStableDiffusionRequest,
     GenerateStableDiffusionImg2ImgRequest,
     GenerateStableDiffusionInpaintRequest,
     GenerateStableDiffusionControlNetRequest,
     GenerateStableDiffusionControlNetImg2ImgRequest,
+    GenerateStableDiffusionControlNetInpaintRequest,
     GenerateStableDiffusionXLRequest,
     GenerateStableDiffusionXLImg2ImgRequest,
     GenerateStableDiffusionXLInpaintRequest,
@@ -117,6 +118,21 @@ async def generate_with_stable_diffusion_controlnet_img2img_pipeline(
         params,
         background_tasks,
         PipelineOptions.StableDiffusionControlNetImg2ImgPipeline,
+    )
+
+
+@app.post(
+    "/generate/StableDiffusionControlNetInpaintPipeline",
+    response_model=GenerateResponse,
+)
+async def generate_with_stable_diffusion_controlnet_inpaint_pipeline(
+    params: GenerateStableDiffusionControlNetInpaintRequest,
+    background_tasks: BackgroundTasks,
+):
+    return await generate_images_common(
+        params,
+        background_tasks,
+        PipelineOptions.StableDiffusionControlNetInpaintPipeline,
     )
 
 
