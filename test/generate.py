@@ -56,10 +56,13 @@ def do_job(file_path, fixture_dir, outputs_dir):
     meta = body["meta"]
     print(json.dumps(meta, indent=2))
 
-    for idx, image in enumerate(result.json().get("images", [])):
-        filename = os.path.join(outputs_dir, f"{pipeline}-{name}-{idx + 1}.jpg")
-        with open(filename, "wb") as img_file:
-            img_file.write(base64.b64decode(image))
+    if body["inputs"]["return_images"]:
+        for idx, image in enumerate(result.json().get("images", [])):
+            filename = os.path.join(outputs_dir, f"{pipeline}-{name}-{idx + 1}.jpg")
+            with open(filename, "wb") as img_file:
+                img_file.write(base64.b64decode(image))
+    elif body["inputs"]["store_images"]:
+        print(json.dumps(body, indent=2))
 
 
 def unload_model():

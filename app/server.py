@@ -1,4 +1,7 @@
-import copy
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 import time
 import os
 import sys
@@ -20,10 +23,12 @@ from schemas import (
     LoadCheckpointParams,
     SystemPerformance,
 )
-from image_utils import pil_to_b64, prepare_image_field
+from image_utils import pil_to_b64, prepare_image_field, store_image
 import config
 from monitoring import get_detailed_system_performance
-import logging
+
+import uuid
+import asyncio
 
 
 logging.basicConfig(level=logging.INFO)
@@ -49,10 +54,16 @@ async def system_stats():
     return get_detailed_system_performance()
 
 
+def run_async(func, *args):
+    asyncio.run(func(*args))
+
+
 @app.post("/generate")
-async def generate(params: GenerateParams):
+async def generate(params: GenerateParams, background_tasks: BackgroundTasks):
     start = time.perf_counter()
     model = get_checkpoint(params.checkpoint, vae=params.vae)
+    if params.batch_id is None:
+        params.batch_id = str(uuid.uuid4())
     refiner_pipe = None
     try:
         pipe = model.get_pipeline(
@@ -126,12 +137,20 @@ async def generate(params: GenerateParams):
         gen_params["control_image"] = prepare_image_field(gen_params["control_image"])
         img_decode_time += time.perf_counter() - b64_decode
 
-    refiner_params = copy.deepcopy(gen_params)
+    if (
+        refiner_pipe is not None
+        and "denoising_end" in gen_params
+        and gen_params["denoising_end"] is not None
+        and gen_params["denoising_end"] < 1
+    ):
+        gen_params["output_type"] = "latent"
+
+    # Refiner values should default to the original generation parameters
     if refiner_pipe is not None:
-        if "denoising_start" in gen_params:
-            refiner_params["denoising_start"] = gen_params["denoising_start"]
-            del gen_params["denoising_start"]
-            gen_params["output_type"] = "latent"
+        refiner_params = params.refiner_parameters.model_dump()
+        for k, v in refiner_params.items():
+            if v is None and k in gen_params:
+                refiner_params[k] = gen_params[k]
 
     # Manage safety checker preferences
     if params.safety_checker and hasattr(pipe, "safety_checker"):
@@ -149,9 +168,17 @@ async def generate(params: GenerateParams):
             images = refiner_pipe(**refiner_params).images
         stop = time.perf_counter()
         print(f"Generated {len(images)} images in {stop - gen_start} seconds")
+        image_paths = []
+        if params.store_images:
+            for idx, img in enumerate(images):
+                image_name = f"{params.batch_id}-{idx}"
+                image_paths.append(f"{image_name}.jpg")
+                background_tasks.add_task(run_async, store_image, img, image_name)
         # if we're returning images, then we need to encode them as base64
         if params.return_images:
             images = [pil_to_b64(img) for img in images]
+        else:
+            images = image_paths
         b64_stop = time.perf_counter()
         return {
             "images": images,

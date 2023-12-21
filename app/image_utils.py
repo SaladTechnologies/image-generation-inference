@@ -3,6 +3,7 @@ import io
 import base64
 import config
 from typing import Union, List
+from webhooks import image_stored
 
 
 def pil_to_b64(image: Image) -> str:
@@ -36,6 +37,8 @@ def prepare_image_field(
         return [b64_to_pil(img) for img in image]
 
 
-def store_image(image: Image, name: str):
+async def store_image(image: Image, name: str):
     if config.image_storage_strategy == "disk":
-        image.save(config.image_dir + "/" + name + ".jpg")
+        filepath = config.image_dir + "/" + name + ".jpg"
+        image.save(filepath)
+        await image_stored({"image": filepath})

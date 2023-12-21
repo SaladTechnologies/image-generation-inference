@@ -11,16 +11,17 @@ from sfast.compilers.diffusion_pipeline_compiler import (
 import huggingface_hub
 import config
 from compel import Compel, ReturnedEmbeddingsType
+import logging
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
-print("Torch version:", config.package_versions["torch"], flush=True)
-print("XFormers version:", config.package_versions["xformers"], flush=True)
-print("Triton version:", config.package_versions["triton"], flush=True)
-print("Diffusers version:", config.package_versions["diffusers"], flush=True)
-print("Transformers version:", config.package_versions["transformers"], flush=True)
-print("CUDA Version:", config.package_versions["cuda"], flush=True)
-print("Stable Fast version:", config.package_versions["stable_fast"], flush=True)
+logging.info("Torch version: %s", config.package_versions["torch"])
+logging.info("XFormers version: %s", config.package_versions["xformers"])
+logging.info("Triton version: %s", config.package_versions["triton"])
+logging.info("Diffusers version: %s", config.package_versions["diffusers"])
+logging.info("Transformers version: %s", config.package_versions["transformers"])
+logging.info("CUDA Version: %s", config.package_versions["cuda"])
+logging.info("Stable Fast version: %s", config.package_versions["stable_fast"])
 
 
 compile_config = CompilationConfig.Default()
@@ -46,7 +47,7 @@ def load_checkpoint(
     Returns:
         DiffusionPipeline: A DiffusionPipeline that is approriate for the model type
     """
-    print(f"Loading Checkpoint: {model_name}", flush=True)
+    logging.info("Loading Checkpoint: %s", model_name)
     model_kwargs = {
         "torch_dtype": torch.float16,
         "low_cpu_mem_usage": True,
@@ -65,10 +66,10 @@ def load_checkpoint(
             variant="fp16",
         )
         model_kwargs["vae"] = vae_model
-        print(f"Loaded VAE {vae} for {model_name}", flush=True)
+        logging.info("Loaded VAE %s for %s", vae, model_name)
     elif vae is not None and vae in loaded_vae:
         model_kwargs["vae"] = loaded_vae[vae]
-        print(f"Using loaded VAE {vae} for {model_name}", flush=True)
+        logging.info("Using loaded VAE %s for %s", vae, model_name)
 
     if refiner_for is not None and refiner_for not in loaded_checkpoints:
         raise Exception(f"Unknown base model {refiner_for}")
@@ -99,7 +100,7 @@ def load_checkpoint(
         pipe = PipeClass.from_single_file(model_path, **model_kwargs)
     end = time.perf_counter()
     model_class = pipe.__class__.__name__
-    print(f"Loaded {model_class} with {model_name} in {end - start:.2f}s", flush=True)
+    logging.info("Loaded %s with %s in %.2fs", model_class, model_name, end - start)
     return pipe
 
 
@@ -114,7 +115,7 @@ def load_controlnet(model_name: str) -> diffusers.ControlNetModel:
         ControlNetModel: The loaded ControlNet model.
 
     """
-    print(f"Loading ControlNet: {model_name}", flush=True)
+    logging.info("Loading ControlNet: %s", model_name)
     model_kwargs = {"torch_dtype": torch.float16, "low_cpu_mem_usage": True}
     start = time.perf_counter()
     if "/" in model_name and not model_name.endswith(".safetensors"):
@@ -127,7 +128,7 @@ def load_controlnet(model_name: str) -> diffusers.ControlNetModel:
             model_path, **model_kwargs
         )
     end = time.perf_counter()
-    print(f"Loaded ControlNet {model_name} in {end - start:.2f}s", flush=True)
+    logging.info("Loaded ControlNet %s in %.2fs", model_name, end - start)
     return controlnet
 
 
@@ -147,12 +148,12 @@ class ModelManager:
         if hasattr(pipe, "safety_checker"):
             self.__safety_checker__ = pipe.safety_checker
             self.__feature_extractor__ = pipe.feature_extractor
-        print(f"Moving {model_name} ({pipe_type}) to GPU", flush=True)
+        logging.info("Moving %s (%s) to GPU", model_name, pipe_type)
         start = time.perf_counter()
         pipe.to("cuda")
         end = time.perf_counter()
-        print(f"Moved {model_name} to GPU in {end - start:.2f}s", flush=True)
-        print(f"Compiling {model_name}", flush=True)
+        logging.info("Moved %s to GPU in %.2fs", model_name, end - start)
+        logging.info("Compiling %s", model_name)
         tokenizers = []
         text_encoders = []
         if hasattr(pipe, "tokenizer") and pipe.tokenizer is not None:
@@ -178,7 +179,7 @@ class ModelManager:
             loaded_vae["default_vae"] = pipe.vae
         elif vae is not None and vae not in loaded_vae:
             loaded_vae[vae] = pipe.vae
-        print(f"Compiled {model_name} in {end - start:.2f}s", flush=True)
+        logging.info("Compiled %s in %.2fs", model_name, end - start)
         compel_kwargs = {}
         if len(tokenizers) == 1:
             compel_kwargs["tokenizer"] = tokenizers[0]
@@ -193,12 +194,12 @@ class ModelManager:
             ] = ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED
             compel_kwargs["requires_pooled"] = [False, True]
         self.compel = Compel(**compel_kwargs)
-        print(f"Warming up {model_name}", flush=True)
+        logging.info("Warming up %s", model_name)
         start = time.perf_counter()
         for _ in range(2):
             pipe(prompt="Leafy Green Salad", num_inference_steps=1)
         end = time.perf_counter()
-        print(f"Warmed up {model_name} in {end - start:.2f}s", flush=True)
+        logging.info("Warmed up %s in %.2fs", model_name, end - start)
         self.__pipes__[pipe_type] = pipe
 
     def get_safety_checker(self):
@@ -243,7 +244,9 @@ class ModelManager:
         # if the scheduler is tuple, print it
         if isinstance(pipe.scheduler, tuple):
             # print the type and value of all members of the tuple
-            print([(scheduler, type(scheduler)) for scheduler in pipe.scheduler])
+            logging.debug(
+                [(scheduler, type(scheduler)) for scheduler in pipe.scheduler]
+            )
         return pipe.scheduler._compatibles
 
     def get_a1111_scheduler(self, a1111_alias: str):
@@ -388,16 +391,16 @@ def get_controlnet(model_name: str) -> diffusers.ControlNetModel:
     """
     if model_name not in loaded_controlnet:
         controlnet = load_controlnet(model_name)
-        print(f"Moving {model_name} to GPU", flush=True)
+        logging.info("Moving %s to GPU", model_name)
         start = time.perf_counter()
         controlnet.to("cuda")
         end = time.perf_counter()
-        print(f"Moved {model_name} to GPU in {end - start:.2f}s", flush=True)
-        print(f"Compiling {model_name}", flush=True)
+        logging.info("Moved %s to GPU in %.2fs", model_name, end - start)
+        logging.info("Compiling %s", model_name)
         start = time.perf_counter()
         controlnet = compile_unet(controlnet, compile_config)
         end = time.perf_counter()
-        print(f"Compiled {model_name} in {end - start:.2f}s", flush=True)
+        logging.info("Compiled %s in %.2fs", model_name, end - start)
         loaded_controlnet[model_name] = controlnet
 
     return loaded_controlnet[model_name]

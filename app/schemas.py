@@ -414,8 +414,10 @@ class GenerateParams(BaseModel):
         StableDiffusionXLImg2ImgPipelineParams,
         StableDiffusionXLInpaintPipelineParams,
     ]
-    refiner_params: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
     return_images: Optional[bool] = True
+    store_images: Optional[bool] = False
+    batch_id: Optional[str] = None
 
     class Config:
         extra = Extra.forbid

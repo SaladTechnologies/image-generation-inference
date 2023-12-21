@@ -32,6 +32,7 @@ os.makedirs(checkpoint_dir, exist_ok=True)
 os.makedirs(vae_dir, exist_ok=True)
 os.makedirs(lora_dir, exist_ok=True)
 os.makedirs(controlnet_dir, exist_ok=True)
+os.makedirs(image_dir, exist_ok=True)
 
 cuda_graph = os.getenv("CUDA_GRAPH", "false").lower() == "true"
 
