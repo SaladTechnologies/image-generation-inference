@@ -20,10 +20,13 @@ from models import (
     list_loaded_checkpoints,
 )
 from schemas import (
-    GenerateParams,
+    GenerateRequest,
     ModelListFilters,
     LoadCheckpointParams,
     SystemPerformance,
+    GenerateStableDiffusionParams,
+    GenerateResponse,
+    PipelineOptions,
 )
 
 import config
@@ -52,8 +55,8 @@ async def system_stats():
     return get_detailed_system_performance()
 
 
-@app.post("/generate")
-async def generate(params: GenerateParams, background_tasks: BackgroundTasks):
+@app.post("/generate", response_model=GenerateResponse)
+async def generate(params: GenerateRequest, background_tasks: BackgroundTasks):
     if params.batch_id is None:
         params.batch_id = str(uuid.uuid4())
     start = time.perf_counter()
@@ -79,6 +82,58 @@ async def generate(params: GenerateParams, background_tasks: BackgroundTasks):
         if refiner_pipe is not None:
             refiner_params["image"] = images
             images = refiner_pipe(**refiner_params).images
+        stop = time.perf_counter()
+        logging.info("Generated %d images in %s seconds", len(images), stop - gen_start)
+        images = handle_images(
+            params.batch_id,
+            images,
+            background_tasks,
+            store_images=params.store_images,
+            return_images=params.return_images,
+        )
+        b64_stop = time.perf_counter()
+        return {
+            "images": images,
+            "inputs": params.model_dump(),
+            "meta": {
+                "model_load_time": pipe_loaded - start,
+                "generation_time": stop - gen_start,
+                "b64_encoding_time": b64_stop - stop + img_decode_time,
+                "total_time": b64_stop - start,
+            },
+        }
+    except Exception as e:
+        logging.exception(e)
+        # Return a 500 if something goes wrong
+        return Response(
+            json.dumps({"error": str(e)}),
+            status_code=500,
+            media_type="application/json",
+        )
+
+
+@app.post("/generate/StableDiffusionPipeline", response_model=GenerateResponse)
+async def generate_with_stable_diffusion_pipeline(
+    params: GenerateStableDiffusionParams, background_tasks: BackgroundTasks
+):
+    if params.batch_id is None:
+        params.batch_id = str(uuid.uuid4())
+    start = time.perf_counter()
+    pipe, _ = get_pipes(
+        checkpoint=params.checkpoint,
+        pipeline=PipelineOptions.StableDiffusionPipeline,
+        vae=params.vae,
+        scheduler=params.scheduler,
+        a1111_scheduler=params.a1111_scheduler,
+        safety_checker=params.safety_checker,
+    )
+    pipe_loaded = time.perf_counter()
+
+    gen_params, _, img_decode_time = prepare_parameters(params.parameters)
+
+    try:
+        gen_start = time.perf_counter()
+        images = pipe(**gen_params).images
         stop = time.perf_counter()
         logging.info("Generated %d images in %s seconds", len(images), stop - gen_start)
         images = handle_images(

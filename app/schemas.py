@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Extra, Field
-from typing import Optional, Union, List, Tuple
+from typing import Optional, Union
 from enum import Enum
 import config
 
@@ -185,16 +185,16 @@ class StableDiffusionPipelineParams(BaseModel):
     Parameters for the Stable Diffusion pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/text2img#diffusers.StableDiffusionPipeline)
     """
 
-    prompt: Union[str, List[str]] = prompt_field
+    prompt: Union[str, list[str]] = prompt_field
     height: Optional[int] = height_field
     width: Optional[int] = width_field
     num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[List[int]] = timesteps_field
+    timesteps: Optional[list[int]] = timesteps_field
     guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, List[str]]] = negative_prompt_field
+    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
     num_images_per_prompt: Optional[int] = num_images_per_prompt_field
     eta: Optional[float] = eta_field
-    seed: Optional[Union[int, List[int]]] = seed_field
+    seed: Optional[Union[int, list[int]]] = seed_field
     guidance_rescale: Optional[float] = guidance_rescale_field
     clip_skip: Optional[int] = clip_skip_field
 
@@ -207,16 +207,16 @@ class StableDiffusionImg2ImgPipelineParams(BaseModel):
     Parameters for the Stable Diffusion Image to Image pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/img2img#diffusers.StableDiffusionImg2ImgPipeline)
     """
 
-    prompt: Union[str, List[str]] = prompt_field
-    image: Union[str, List[str]] = image_field
+    prompt: Union[str, list[str]] = prompt_field
+    image: Union[str, list[str]] = image_field
     strength: Optional[float] = strength_field
     num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[List[int]] = timesteps_field
+    timesteps: Optional[list[int]] = timesteps_field
     guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, List[str]]] = negative_prompt_field
+    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
     num_images_per_prompt: Optional[int] = num_images_per_prompt_field
     eta: Optional[float] = eta_field
-    seed: Optional[Union[int, List[int]]] = seed_field
+    seed: Optional[Union[int, list[int]]] = seed_field
     clip_skip: Optional[int] = clip_skip_field
 
     class Config:
@@ -228,19 +228,19 @@ class StableDiffusionInpaintPipelineParams(BaseModel):
     Parameters for the Stable Diffusion Inpainting pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/inpaint#diffusers.StableDiffusionInpaintPipeline)
     """
 
-    prompt: Union[str, List[str]] = prompt_field
-    image: Union[str, List[str]] = image_field
-    mask_image: Union[str, List[str]] = mask_image_field
+    prompt: Union[str, list[str]] = prompt_field
+    image: Union[str, list[str]] = image_field
+    mask_image: Union[str, list[str]] = mask_image_field
     height: Optional[int] = height_field
     width: Optional[int] = width_field
     strength: Optional[float] = strength_field
     num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[List[int]] = timesteps_field
+    timesteps: Optional[list[int]] = timesteps_field
     guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, List[str]]] = negative_prompt_field
+    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
     num_images_per_prompt: Optional[int] = num_images_per_prompt_field
     eta: Optional[float] = eta_field
-    seed: Optional[Union[int, List[int]]] = seed_field
+    seed: Optional[Union[int, list[int]]] = seed_field
     clip_skip: Optional[int] = clip_skip_field
 
     class Config:
@@ -252,26 +252,26 @@ class StableDiffusionControlNetPipelineParams(BaseModel):
     Parameters for the Stable Diffusion ControlNet pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/controlnet#diffusers.StableDiffusionControlNetPipeline)
     """
 
-    prompt: Union[str, List[str]] = prompt_field
-    image: Union[str, List[str]] = control_image_field
+    prompt: Union[str, list[str]] = prompt_field
+    image: Union[str, list[str]] = control_image_field
     height: Optional[int] = height_field
     width: Optional[int] = width_field
     num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[List[int]] = timesteps_field
+    timesteps: Optional[list[int]] = timesteps_field
     guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, List[str]]] = negative_prompt_field
+    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
     num_images_per_prompt: Optional[int] = num_images_per_prompt_field
     eta: Optional[float] = eta_field
-    seed: Optional[Union[int, List[int]]] = seed_field
+    seed: Optional[Union[int, list[int]]] = seed_field
     controlnet_conditioning_scale: Optional[
-        Union[float, List[float]]
+        Union[float, list[float]]
     ] = controlnet_conditioning_scale_field
     guess_mode: Optional[bool] = guess_mode_field
     control_guidance_start: Optional[
-        Union[float, List[float]]
+        Union[float, list[float]]
     ] = control_guidance_start_field
     control_guidance_end: Optional[
-        Union[float, List[float]]
+        Union[float, list[float]]
     ] = control_guidance_end_field
     clip_skip: Optional[int] = clip_skip_field
 
@@ -284,27 +284,27 @@ class StableDiffusionControlNetImg2ImgPipelineParams(BaseModel):
     Parameters for the Stable Diffusion ControlNet Image to Image pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/controlnet#diffusers.StableDiffusionControlNetImg2ImgPipeline)
     """
 
-    prompt: Union[str, List[str]] = prompt_field
-    image: Union[str, List[str]] = image_field
-    control_image: Union[str, List[str]] = control_image_field
+    prompt: Union[str, list[str]] = prompt_field
+    image: Union[str, list[str]] = image_field
+    control_image: Union[str, list[str]] = control_image_field
     height: Optional[int] = height_field
     width: Optional[int] = width_field
     num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[List[int]] = timesteps_field
+    timesteps: Optional[list[int]] = timesteps_field
     guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, List[str]]] = negative_prompt_field
+    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
     num_images_per_prompt: Optional[int] = num_images_per_prompt_field
     eta: Optional[float] = eta_field
-    seed: Optional[Union[int, List[int]]] = seed_field
+    seed: Optional[Union[int, list[int]]] = seed_field
     controlnet_conditioning_scale: Optional[
-        Union[float, List[float]]
+        Union[float, list[float]]
     ] = controlnet_conditioning_scale_field
     guess_mode: Optional[bool] = guess_mode_field
     control_guidance_start: Optional[
-        Union[float, List[float]]
+        Union[float, list[float]]
     ] = control_guidance_start_field
     control_guidance_end: Optional[
-        Union[float, List[float]]
+        Union[float, list[float]]
     ] = control_guidance_end_field
     clip_skip: Optional[int] = clip_skip_field
 
@@ -317,28 +317,28 @@ class StableDiffusionXLPipelineParams(BaseModel):
     Parameters for the Stable Diffusion XL pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/stable_diffusion_xl#diffusers.StableDiffusionXLPipeline)
     """
 
-    prompt: Union[str, List[str]] = prompt_field
-    prompt_2: Optional[Union[str, List[str]]] = prompt_2_field
+    prompt: Union[str, list[str]] = prompt_field
+    prompt_2: Optional[Union[str, list[str]]] = prompt_2_field
     height: Optional[int] = height_field
     width: Optional[int] = width_field
     num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[List[int]] = timesteps_field
+    timesteps: Optional[list[int]] = timesteps_field
     denoising_end: Optional[float] = denoising_end_field
     guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, List[str]]] = negative_prompt_field
-    negative_prompt_2: Optional[Union[str, List[str]]] = negative_prompt_2_field
+    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
+    negative_prompt_2: Optional[Union[str, list[str]]] = negative_prompt_2_field
     num_images_per_prompt: Optional[int] = num_images_per_prompt_field
     eta: Optional[float] = eta_field
-    seed: Optional[Union[int, List[int]]] = seed_field
+    seed: Optional[Union[int, list[int]]] = seed_field
     guidance_rescale: Optional[float] = guidance_rescale_field
-    original_size: Optional[Tuple[int, int]] = original_size_field
-    crops_coords_top_left: Optional[Tuple[int, int]] = crops_coords_top_left_field
-    target_size: Optional[Tuple[int, int]] = target_size_field
-    negative_original_size: Optional[Tuple[int, int]] = negative_original_size_field
+    original_size: Optional[tuple[int, int]] = original_size_field
+    crops_coords_top_left: Optional[tuple[int, int]] = crops_coords_top_left_field
+    target_size: Optional[tuple[int, int]] = target_size_field
+    negative_original_size: Optional[tuple[int, int]] = negative_original_size_field
     negative_crops_coords_top_left: Optional[
-        Tuple[int, int]
+        tuple[int, int]
     ] = negative_crops_coords_top_left_field
-    negative_target_size: Optional[Tuple[int, int]] = negative_target_size_field
+    negative_target_size: Optional[tuple[int, int]] = negative_target_size_field
 
     class Config:
         extra = Extra.forbid
@@ -349,29 +349,29 @@ class StableDiffusionXLImg2ImgPipelineParams(BaseModel):
     Parameters for the Stable Diffusion XL Image to Image pipeline. [See the diffusers documentation for more details]https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/stable_diffusion_xl#diffusers.StableDiffusionXLImg2ImgPipeline)
     """
 
-    prompt: Union[str, List[str]] = prompt_field
-    prompt_2: Optional[Union[str, List[str]]] = prompt_2_field
-    image: Union[str, List[str]] = image_field
+    prompt: Union[str, list[str]] = prompt_field
+    prompt_2: Optional[Union[str, list[str]]] = prompt_2_field
+    image: Union[str, list[str]] = image_field
     strength: Optional[float] = strength_field
     num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[List[int]] = timesteps_field
+    timesteps: Optional[list[int]] = timesteps_field
     denoising_start: Optional[float] = denoising_start_field
     denoising_end: Optional[float] = denoising_end_field
     guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, List[str]]] = negative_prompt_field
-    negative_prompt_2: Optional[Union[str, List[str]]] = negative_prompt_2_field
+    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
+    negative_prompt_2: Optional[Union[str, list[str]]] = negative_prompt_2_field
     num_images_per_prompt: Optional[int] = num_images_per_prompt_field
     eta: Optional[float] = eta_field
-    seed: Optional[Union[int, List[int]]] = seed_field
+    seed: Optional[Union[int, list[int]]] = seed_field
     guidance_rescale: Optional[float] = guidance_rescale_field
-    original_size: Optional[Tuple[int, int]] = original_size_field
-    crops_coords_top_left: Optional[Tuple[int, int]] = crops_coords_top_left_field
-    target_size: Optional[Tuple[int, int]] = target_size_field
-    negative_original_size: Optional[Tuple[int, int]] = negative_original_size_field
+    original_size: Optional[tuple[int, int]] = original_size_field
+    crops_coords_top_left: Optional[tuple[int, int]] = crops_coords_top_left_field
+    target_size: Optional[tuple[int, int]] = target_size_field
+    negative_original_size: Optional[tuple[int, int]] = negative_original_size_field
     negative_crops_coords_top_left: Optional[
-        Tuple[int, int]
+        tuple[int, int]
     ] = negative_crops_coords_top_left_field
-    negative_target_size: Optional[Tuple[int, int]] = negative_target_size_field
+    negative_target_size: Optional[tuple[int, int]] = negative_target_size_field
     aesthetic_score: Optional[float] = aeshtetic_score_field
     negative_aesthetic_score: Optional[float] = negative_aesthetic_score_field
     clip_skip: Optional[int] = clip_skip_field
@@ -385,31 +385,31 @@ class StableDiffusionXLInpaintPipelineParams(BaseModel):
     Parameters for the Stable Diffusion XL Inpainting pipeline. [See the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/pipelines/stable_diffusion/stable_diffusion_xl#diffusers.StableDiffusionXLInpaintPipeline)
     """
 
-    prompt: Union[str, List[str]] = prompt_field
-    prompt_2: Optional[Union[str, List[str]]] = prompt_2_field
-    image: Union[str, List[str]] = image_field
-    mask_image: Union[str, List[str]] = mask_image_field
+    prompt: Union[str, list[str]] = prompt_field
+    prompt_2: Optional[Union[str, list[str]]] = prompt_2_field
+    image: Union[str, list[str]] = image_field
+    mask_image: Union[str, list[str]] = mask_image_field
     height: Optional[int] = height_field
     width: Optional[int] = width_field
     strength: Optional[float] = strength_field
     num_inference_steps: Optional[int] = num_inference_steps_field
-    timesteps: Optional[List[int]] = timesteps_field
+    timesteps: Optional[list[int]] = timesteps_field
     denoising_start: Optional[float] = denoising_start_field
     denoising_end: Optional[float] = denoising_end_field
     guidance_scale: Optional[float] = guidance_scale_field
-    negative_prompt: Optional[Union[str, List[str]]] = negative_prompt_field
-    negative_prompt_2: Optional[Union[str, List[str]]] = negative_prompt_2_field
+    negative_prompt: Optional[Union[str, list[str]]] = negative_prompt_field
+    negative_prompt_2: Optional[Union[str, list[str]]] = negative_prompt_2_field
     num_images_per_prompt: Optional[int] = num_images_per_prompt_field
     eta: Optional[float] = eta_field
-    seed: Optional[Union[int, List[int]]] = seed_field
-    original_size: Optional[Tuple[int, int]] = original_size_field
-    crops_coords_top_left: Optional[Tuple[int, int]] = crops_coords_top_left_field
-    target_size: Optional[Tuple[int, int]] = target_size_field
-    negative_original_size: Optional[Tuple[int, int]] = negative_original_size_field
+    seed: Optional[Union[int, list[int]]] = seed_field
+    original_size: Optional[tuple[int, int]] = original_size_field
+    crops_coords_top_left: Optional[tuple[int, int]] = crops_coords_top_left_field
+    target_size: Optional[tuple[int, int]] = target_size_field
+    negative_original_size: Optional[tuple[int, int]] = negative_original_size_field
     negative_crops_coords_top_left: Optional[
-        Tuple[int, int]
+        tuple[int, int]
     ] = negative_crops_coords_top_left_field
-    negative_target_size: Optional[Tuple[int, int]] = negative_target_size_field
+    negative_target_size: Optional[tuple[int, int]] = negative_target_size_field
     aesthetic_score: Optional[float] = aeshtetic_score_field
     negative_aesthetic_score: Optional[float] = negative_aesthetic_score_field
     clip_skip: Optional[int] = clip_skip_field
@@ -430,12 +430,12 @@ AllParameters = Union[
 ]
 
 
-class GenerateParams(BaseModel):
+class GenerateRequest(BaseModel):
     batch_id: Optional[str] = batch_id_field
     pipeline: Optional[PipelineOptions] = pipeline_field
     checkpoint: str = checkpoint_field
     refiner: Optional[str] = None
-    control_model: Optional[Union[str, List[str]]] = None
+    control_model: Optional[Union[str, list[str]]] = None
     scheduler: Optional[str] = scheduler_field
     a1111_scheduler: Optional[str] = a1111_scheduler_field
     safety_checker: Optional[bool] = config.load_safety_checker
@@ -452,12 +452,33 @@ class GenerateParams(BaseModel):
 class GenerateStableDiffusionParams(BaseModel):
     batch_id: Optional[str] = batch_id_field
     checkpoint: str = checkpoint_field
-    scheduler_field: Optional[str] = scheduler_field
+    scheduler: Optional[str] = scheduler_field
     a1111_scheduler: Optional[str] = a1111_scheduler_field
     vae: Optional[str] = vae_field
+    safety_checker: Optional[bool] = config.load_safety_checker
     parameters: StableDiffusionPipelineParams
     return_images: Optional[bool] = return_images_field
     store_images: Optional[bool] = store_images_field
+
+    class Config:
+        extra = Extra.forbid
+
+
+class GenerateMetadata(BaseModel):
+    model_load_time: float
+    generation_time: float
+    b64_encoding_time: float
+    total_time: float
+
+    class Config:
+        extra = Extra.forbid
+        protected_namespaces = ()
+
+
+class GenerateResponse(BaseModel):
+    images: list[str]
+    inputs: Union[GenerateRequest, GenerateStableDiffusionParams]
+    meta: GenerateMetadata
 
     class Config:
         extra = Extra.forbid
@@ -479,8 +500,8 @@ class CPUFrequency(BaseModel):
 
 
 class CPUPerformance(BaseModel):
-    utilization: List[float]
-    frequency: List[CPUFrequency]
+    utilization: list[float]
+    frequency: list[CPUFrequency]
 
 
 class MemoryPerformance(BaseModel):
@@ -520,7 +541,7 @@ class SystemPerformance(BaseModel):
     cpu: CPUPerformance
     memory: MemoryPerformance
     storage: StoragePerformance
-    gpu: List[GPUPerformance]
+    gpu: list[GPUPerformance]
     packages: PackageVersions
 
 

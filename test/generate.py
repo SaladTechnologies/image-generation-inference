@@ -39,7 +39,7 @@ def do_job(file_path, fixture_dir, outputs_dir):
         unload_model()
 
     result = requests.post(
-        "http://localhost:1234/generate",
+        f"http://localhost:1234/generate",
         headers={"Content-Type": "application/json"},
         json=body,
     )
