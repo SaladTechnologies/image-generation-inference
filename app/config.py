@@ -44,7 +44,7 @@ port = int(os.getenv("PORT", "1234"))
 launch_ckpt = os.getenv("LAUNCH_CHECKPOINT", None)
 launch_vae = os.getenv("LAUNCH_VAE", None)
 
-image_storage_strategy = os.getenv("IMAGE_STORAGE_STRATEGY", "disk")
+image_storage_strategy = os.getenv("IMAGE_STORAGE_STRATEGY", "disk").lower()
 
 webhooks = {
     "model.loaded": os.getenv("WEBHOOK_MODEL_LOADED", None),
