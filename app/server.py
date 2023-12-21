@@ -8,7 +8,6 @@ logging.basicConfig(level=log_level)
 
 import time
 import sys
-import torch
 from fastapi import FastAPI, Response, Depends, BackgroundTasks
 import json
 import uvicorn
@@ -26,12 +25,12 @@ from schemas import (
     LoadCheckpointParams,
     SystemPerformance,
 )
-from image_utils import pil_to_b64, prepare_image_field, store_image
+
 import config
 from monitoring import get_detailed_system_performance
 import uuid
-import asyncio
 import webhooks
+from generate import get_pipes, prepare_parameters, handle_images, run_async
 
 if config.launch_ckpt is not None or config.launch_vae is not None:
     logging.info("Preloading checkpoint %s", config.launch_ckpt)
@@ -53,111 +52,26 @@ async def system_stats():
     return get_detailed_system_performance()
 
 
-def run_async(func, *args):
-    asyncio.run(func(*args))
-
-
 @app.post("/generate")
 async def generate(params: GenerateParams, background_tasks: BackgroundTasks):
-    start = time.perf_counter()
-    model = get_checkpoint(params.checkpoint, vae=params.vae)
     if params.batch_id is None:
         params.batch_id = str(uuid.uuid4())
-    refiner_pipe = None
-    try:
-        pipe = model.get_pipeline(
-            params.pipeline.value, control_model=params.control_model
-        )
-    except Exception as e:
-        logging.exception(e)
-        return Response(
-            json.dumps({"error": str(e)}),
-            status_code=500,
-            media_type="application/json",
-        )
-    if params.refiner is not None:
-        try:
-            refiner = get_checkpoint(params.refiner, refiner_for=params.checkpoint)
-            refiner_pipe = refiner.get_pipeline(params.pipeline.value)
-        except Exception as e:
-            logging.exception(e)
-            return Response(
-                json.dumps({"error": str(e)}),
-                status_code=500,
-                media_type="application/json",
-            )
+    start = time.perf_counter()
+    pipe, refiner_pipe = get_pipes(
+        checkpoint=params.checkpoint,
+        pipeline=params.pipeline,
+        vae=params.vae,
+        control_model=params.control_model,
+        refiner=params.refiner,
+        scheduler=params.scheduler,
+        a1111_scheduler=params.a1111_scheduler,
+        safety_checker=params.safety_checker,
+    )
     pipe_loaded = time.perf_counter()
 
-    # Check if the scheduler is compatible with the pipeline
-    compatible_schedulers = model.get_compatible_schedulers(params.pipeline.value)
-    if params.scheduler is not None and params.scheduler not in compatible_schedulers:
-        return Response(
-            json.dumps(
-                {
-                    "error": f"Scheduler {params.scheduler} is not compatible with pipeline {params.pipeline}. Compatible schedulers are {compatible_schedulers}"
-                }
-            ),
-            status_code=400,
-            media_type="application/json",
-        )
-    elif params.scheduler is not None:
-        pipe.scheduler = model.get_scheduler(params.scheduler)
-    elif params.a1111_scheduler is not None:
-        pipe.scheduler = model.get_a1111_scheduler(params.a1111_scheduler)
-
-    gen_params = {
-        k: v for k, v in params.parameters.model_dump().items() if v is not None
-    }
-
-    # We need to convert seed to torch generators
-    if "seed" in gen_params:
-        if not isinstance(gen_params["seed"], list):
-            generator = torch.Generator(device="cuda").manual_seed(gen_params["seed"])
-        else:
-            generator = [
-                torch.Generator(device="cuda").manual_seed(s)
-                for s in gen_params["seed"]
-            ]
-        gen_params["generator"] = generator
-        del gen_params["seed"]
-
-    # We need to convert base64 images to PIL images
-    img_decode_time = 0
-    if "image" in gen_params:
-        b64_decode = time.perf_counter()
-        gen_params["image"] = prepare_image_field(gen_params["image"])
-        img_decode_time += time.perf_counter() - b64_decode
-    if "mask_image" in gen_params:
-        b64_decode = time.perf_counter()
-        gen_params["mask_image"] = prepare_image_field(gen_params["mask_image"])
-        img_decode_time += time.perf_counter() - b64_decode
-    if "control_image" in gen_params:
-        b64_decode = time.perf_counter()
-        gen_params["control_image"] = prepare_image_field(gen_params["control_image"])
-        img_decode_time += time.perf_counter() - b64_decode
-
-    if (
-        refiner_pipe is not None
-        and "denoising_end" in gen_params
-        and gen_params["denoising_end"] is not None
-        and gen_params["denoising_end"] < 1
-    ):
-        gen_params["output_type"] = "latent"
-
-    # Refiner values should default to the original generation parameters
-    if refiner_pipe is not None:
-        refiner_params = params.refiner_parameters.model_dump()
-        for k, v in refiner_params.items():
-            if v is None and k in gen_params:
-                refiner_params[k] = gen_params[k]
-
-    # Manage safety checker preferences
-    if params.safety_checker and hasattr(pipe, "safety_checker"):
-        pipe.safety_checker = model.get_safety_checker()
-        pipe.feature_extractor = model.get_feature_extractor()
-    elif hasattr(pipe, "safety_checker"):
-        pipe.safety_checker = None
-        pipe.feature_extractor = None
+    gen_params, refiner_params, img_decode_time = prepare_parameters(
+        params.parameters, params.refiner_parameters
+    )
 
     try:
         gen_start = time.perf_counter()
@@ -167,17 +81,13 @@ async def generate(params: GenerateParams, background_tasks: BackgroundTasks):
             images = refiner_pipe(**refiner_params).images
         stop = time.perf_counter()
         logging.info("Generated %d images in %s seconds", len(images), stop - gen_start)
-        image_paths = []
-        if params.store_images:
-            for idx, img in enumerate(images):
-                image_name = f"{params.batch_id}-{idx}"
-                image_paths.append(f"{image_name}.jpg")
-                background_tasks.add_task(run_async, store_image, img, image_name)
-        # if we're returning images, then we need to encode them as base64
-        if params.return_images:
-            images = [pil_to_b64(img) for img in images]
-        else:
-            images = image_paths
+        images = handle_images(
+            params.batch_id,
+            images,
+            background_tasks,
+            store_images=params.store_images,
+            return_images=params.return_images,
+        )
         b64_stop = time.perf_counter()
         return {
             "images": images,

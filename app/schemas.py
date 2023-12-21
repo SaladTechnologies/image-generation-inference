@@ -146,6 +146,38 @@ negative_aesthetic_score_field = Field(
     2.5,
     description="Part of SDXL’s micro-conditioning as explained in section 2.2 of https://huggingface.co/papers/2307.01952. Can be used to simulate an aesthetic score of the generated image by influencing the negative text condition.",
 )
+checkpoint_field = Field(
+    ...,
+    description="Either a HuggingFace model name (e.g. stabilityai/stable-diffusion-xl-base-1.0) or a local checkpoint filename (e.g. dreamshaper_8.safetensors)",
+)
+batch_id_field = Field(
+    None,
+    description="A unique identifier for the batch of images being generated. If not specified, a random UUID will be generated. Images stored to disk will be named {batch_id}-{image_index}.jpg",
+)
+scheduler_field = Field(
+    None,
+    description="See [the diffusers documentation for more details]https://huggingface.co/docs/diffusers/api/schedulers/overview)",
+)
+a1111_scheduler_field = Field(
+    None,
+    description="Scheduler names you might be familiar with from Automatic1111 or k-diffusion are also accepted. See [the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/schedulers/overview)",
+)
+pipeline_field = Field(
+    PipelineOptions.StableDiffusionPipeline,
+    description="The pipeline class to use for image generation.",
+)
+vae_field = Field(
+    None,
+    description="Either a HuggingFace model name (e.g. stabilityai/stable-diffusion-xl-base-1.0) or a local vae safetensors filename (e.g. some-vae.safetensors)",
+)
+return_images_field = Field(
+    True,
+    description="Whether to return images or not. If false, and images are instead stored, only the image paths will be returned. If true, images will be returned as base64-encoded strings.",
+)
+store_images_field = Field(
+    False,
+    description="Whether to store images or not. If true, images will be stored according to the image_storage_strategy. If false, images will not be stored.",
+)
 
 
 class StableDiffusionPipelineParams(BaseModel):
@@ -386,41 +418,46 @@ class StableDiffusionXLInpaintPipelineParams(BaseModel):
         extra = Extra.forbid
 
 
+AllParameters = Union[
+    StableDiffusionPipelineParams,
+    StableDiffusionImg2ImgPipelineParams,
+    StableDiffusionInpaintPipelineParams,
+    StableDiffusionControlNetPipelineParams,
+    StableDiffusionControlNetImg2ImgPipelineParams,
+    StableDiffusionXLPipelineParams,
+    StableDiffusionXLImg2ImgPipelineParams,
+    StableDiffusionXLInpaintPipelineParams,
+]
+
+
 class GenerateParams(BaseModel):
-    checkpoint: str = Field(
-        ...,
-        description="Either a HuggingFace model name (e.g. stabilityai/stable-diffusion-xl-base-1.0) or a local checkpoint filename (e.g. dreamshaper_8.safetensors)",
-    )
+    batch_id: Optional[str] = batch_id_field
+    pipeline: Optional[PipelineOptions] = pipeline_field
+    checkpoint: str = checkpoint_field
     refiner: Optional[str] = None
     control_model: Optional[Union[str, List[str]]] = None
-    pipeline: Optional[PipelineOptions] = PipelineOptions.StableDiffusionPipeline
-    scheduler: Optional[str] = Field(
-        None,
-        description="See [the diffusers documentation for more details]https://huggingface.co/docs/diffusers/api/schedulers/overview)",
-    )
-    a1111_scheduler: Optional[str] = Field(
-        None,
-        description="Scheduler names you might be familiar with from Automatic1111 or k-diffusion are also accepted. See [the diffusers documentation for more details](https://huggingface.co/docs/diffusers/api/schedulers/overview)",
-    )
+    scheduler: Optional[str] = scheduler_field
+    a1111_scheduler: Optional[str] = a1111_scheduler_field
     safety_checker: Optional[bool] = config.load_safety_checker
-    vae: Optional[str] = None
-    parameters: Union[
-        StableDiffusionPipelineParams,
-        StableDiffusionImg2ImgPipelineParams,
-        StableDiffusionInpaintPipelineParams,
-        StableDiffusionControlNetPipelineParams,
-        StableDiffusionControlNetImg2ImgPipelineParams,
-        StableDiffusionXLPipelineParams,
-        StableDiffusionXLImg2ImgPipelineParams,
-        StableDiffusionXLInpaintPipelineParams,
-    ]
+    vae: Optional[str] = vae_field
+    parameters: AllParameters
     refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
-    return_images: Optional[bool] = True
-    store_images: Optional[bool] = False
-    batch_id: Optional[str] = None
+    return_images: Optional[bool] = return_images_field
+    store_images: Optional[bool] = store_images_field
 
     class Config:
         extra = Extra.forbid
+
+
+class GenerateStableDiffusionParams(BaseModel):
+    batch_id: Optional[str] = batch_id_field
+    checkpoint: str = checkpoint_field
+    scheduler_field: Optional[str] = scheduler_field
+    a1111_scheduler: Optional[str] = a1111_scheduler_field
+    vae: Optional[str] = vae_field
+    parameters: StableDiffusionPipelineParams
+    return_images: Optional[bool] = return_images_field
+    store_images: Optional[bool] = store_images_field
 
     class Config:
         extra = Extra.forbid
