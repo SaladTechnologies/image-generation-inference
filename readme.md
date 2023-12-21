@@ -17,6 +17,12 @@ Additionally:
 - Controlnet-per-request
 - vae swapping
 
+## Tests
+
+```bash
+python -m unittest discover -s tests
+```
+
 ## Supported Pipelines
 
 ### StableDiffusionPipeline

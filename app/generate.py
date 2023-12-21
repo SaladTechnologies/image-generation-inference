@@ -173,7 +173,8 @@ async def generate_images_common(
     pipe_loaded = time.perf_counter()
 
     gen_params, refiner_params, img_decode_time = prepare_parameters(
-        params.parameters, params.refiner_parameters
+        params.parameters,
+        params.refiner_parameters if hasattr(params, "refiner_parameters") else None,
     )
 
     try:
