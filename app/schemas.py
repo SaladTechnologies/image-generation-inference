@@ -446,7 +446,7 @@ class BaseGenerateRequest(BaseModel):
 class GenerateRequest(BaseGenerateRequest):
     pipeline: Optional[PipelineOptions] = pipeline_field
     checkpoint: str = checkpoint_field
-    refiner: Optional[str] = None
+    refiner_model: Optional[str] = None
     control_model: Optional[Union[str, list[str]]] = None
     safety_checker: Optional[bool] = config.load_safety_checker
     parameters: AllParameters
@@ -480,6 +480,24 @@ class GenerateStableDiffusionControlNetImg2ImgRequest(BaseGenerateRequest):
     parameters: StableDiffusionControlNetImg2ImgPipelineParams
 
 
+class GenerateStableDiffusionXLRequest(BaseGenerateRequest):
+    parameters: StableDiffusionXLPipelineParams
+    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_model: Optional[str] = None
+
+
+class GenerateStableDiffusionXLImg2ImgRequest(BaseGenerateRequest):
+    parameters: StableDiffusionXLImg2ImgPipelineParams
+    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_model: Optional[str] = None
+
+
+class GenerateStableDiffusionXLInpaintRequest(BaseGenerateRequest):
+    parameters: StableDiffusionXLInpaintPipelineParams
+    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_model: Optional[str] = None
+
+
 class GenerateMetadata(BaseModel):
     model_load_time: float
     generation_time: float
@@ -500,6 +518,9 @@ class GenerateResponse(BaseModel):
         GenerateStableDiffusionInpaintRequest,
         GenerateStableDiffusionControlNetRequest,
         GenerateStableDiffusionControlNetImg2ImgRequest,
+        GenerateStableDiffusionXLRequest,
+        GenerateStableDiffusionXLImg2ImgRequest,
+        GenerateStableDiffusionXLInpaintRequest,
     ]
     meta: GenerateMetadata
 
