@@ -9,8 +9,8 @@ from sfast.compilers.diffusion_pipeline_compiler import (
     CompilationConfig,
 )
 import huggingface_hub
-import gc
 import config
+from compel import Compel, ReturnedEmbeddingsType
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
@@ -153,13 +153,22 @@ class ModelManager:
         end = time.perf_counter()
         print(f"Moved {model_name} to GPU in {end - start:.2f}s", flush=True)
         print(f"Compiling {model_name}", flush=True)
+        tokenizers = []
+        text_encoders = []
+        if hasattr(pipe, "tokenizer") and pipe.tokenizer is not None:
+            tokenizers.append(pipe.tokenizer)
+        if hasattr(pipe, "tokenizer_2") and pipe.tokenizer_2 is not None:
+            tokenizers.append(pipe.tokenizer_2)
         start = time.perf_counter()
+
         if hasattr(pipe, "unet") and pipe.unet is not None:
             pipe.unet.eval()
         if hasattr(pipe, "text_encoder") and pipe.text_encoder is not None:
             pipe.text_encoder.eval()
+            text_encoders.append(pipe.text_encoder)
         if hasattr(pipe, "text_encoder_2") and pipe.text_encoder_2 is not None:
             pipe.text_encoder_2.eval()
+            text_encoders.append(pipe.text_encoder_2)
         if hasattr(pipe, "vae") and pipe.vae is not None:
             pipe.vae.eval()
 
@@ -170,6 +179,20 @@ class ModelManager:
         elif vae is not None and vae not in loaded_vae:
             loaded_vae[vae] = pipe.vae
         print(f"Compiled {model_name} in {end - start:.2f}s", flush=True)
+        compel_kwargs = {}
+        if len(tokenizers) == 1:
+            compel_kwargs["tokenizer"] = tokenizers[0]
+        else:
+            compel_kwargs["tokenizer"] = tokenizers
+        if len(text_encoders) == 1:
+            compel_kwargs["text_encoder"] = text_encoders[0]
+        else:
+            compel_kwargs["text_encoder"] = text_encoders
+            compel_kwargs[
+                "returned_embeddings_type"
+            ] = ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED
+            compel_kwargs["requires_pooled"] = [False, True]
+        self.compel = Compel(**compel_kwargs)
         print(f"Warming up {model_name}", flush=True)
         start = time.perf_counter()
         for _ in range(2):

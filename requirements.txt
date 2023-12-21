@@ -16,3 +16,4 @@ pydantic
 uvicorn
 aiohttp
 gputil
+compel
