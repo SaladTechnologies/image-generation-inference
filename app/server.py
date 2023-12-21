@@ -26,16 +26,11 @@ from schemas import (
 from image_utils import pil_to_b64, prepare_image_field, store_image
 import config
 from monitoring import get_detailed_system_performance
-
 import uuid
 import asyncio
 
-
-logging.basicConfig(level=logging.INFO)
-
-
 if config.launch_ckpt is not None or config.launch_vae is not None:
-    print(f"Preloading checkpoint {config.launch_ckpt}", flush=True)
+    logging.info("Preloading checkpoint %s", config.launch_ckpt)
     get_checkpoint(config.launch_ckpt, config.launch_vae)
 
 app = FastAPI(
@@ -167,7 +162,7 @@ async def generate(params: GenerateParams, background_tasks: BackgroundTasks):
             refiner_params["image"] = images
             images = refiner_pipe(**refiner_params).images
         stop = time.perf_counter()
-        print(f"Generated {len(images)} images in {stop - gen_start} seconds")
+        logging.info("Generated %d images in %s seconds", len(images), stop - gen_start)
         image_paths = []
         if params.store_images:
             for idx, img in enumerate(images):
@@ -235,7 +230,7 @@ def restart_server():
         os.execv(sys.executable, [sys.executable] + sys.argv)
     except Exception as e:
         # Handle exceptions if any
-        print(f"Error during program restart: {e}")
+        logging.exception(e)
 
 
 @app.post("/restart")
