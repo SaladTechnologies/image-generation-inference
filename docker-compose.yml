@@ -19,3 +19,5 @@ services:
               capabilities: [ gpu ]
     environment:
       LOG_LEVEL: info
+      # These are the models assumed by the test suite
+      CIVITAI_MODEL_VERSION_IDS: 122143,128713,8815,131579

@@ -28,20 +28,20 @@ python -m unittest discover -s test
 - ✅ = Supported, with tests
 - 🤷 = Expected to work, but not tested yet
 
-| Pipeline                                   | SD1.5 | SD2.1 | SDXL  | SDXL Turbo |
-| ------------------------------------------ | :---: | :---: | :---: | :--------: |
-| StableDiffusionPipeline                    |   ✅   |   ✅   |       |            |
-| StableDiffusionImg2ImgPipeline             |   ✅   |   ✅   |       |            |
-| StableDiffusionInpaintPipeline             |   ✅   |   ✅   |       |            |
-| StableDiffusionControlNetPipeline          |   ✅   |       |       |            |
-| StableDiffusionControlNetImg2ImgPipeline   |   🤷   |       |       |            |
-| StableDiffusionControlNetInpaintPipeline   |   🤷   |       |       |            |
-| StableDiffusionXLPipeline                  |       |       |   ✅   |     ✅      |
-| StableDiffusionXLImg2ImgPipeline           |       |       |   ✅   |     ✅      |
-| StableDiffusionXLInpaintPipeline           |       |       |   ✅   |     ✅      |
-| StableDiffusionXLControlNetPipeline        |       |       |   🤷   |     🤷      |
-| StableDiffusionXLControlNetImg2ImgPipeline |       |       |   🤷   |     🤷      |
-| StableDiffusionXLControlNetInpaintPipeline |       |       |   🤷   |     🤷      |
+| Pipeline                                   | SD1.5 | SD2.1 | SDXL 1.0 | SDXL Turbo |
+| ------------------------------------------ | :---: | :---: | :------: | :--------: |
+| StableDiffusionPipeline                    |   ✅   |   ✅   |          |            |
+| StableDiffusionImg2ImgPipeline             |   ✅   |   ✅   |          |            |
+| StableDiffusionInpaintPipeline             |   ✅   |   ✅   |          |            |
+| StableDiffusionControlNetPipeline          |   ✅   |       |          |            |
+| StableDiffusionControlNetImg2ImgPipeline   |   🤷   |       |          |            |
+| StableDiffusionControlNetInpaintPipeline   |   🤷   |       |          |            |
+| StableDiffusionXLPipeline                  |       |       |    ✅     |     ✅      |
+| StableDiffusionXLImg2ImgPipeline           |       |       |    ✅     |     ✅      |
+| StableDiffusionXLInpaintPipeline           |       |       |    ✅     |     ✅      |
+| StableDiffusionXLControlNetPipeline        |       |       |    🤷     |     🤷      |
+| StableDiffusionXLControlNetImg2ImgPipeline |       |       |    🤷     |     🤷      |
+| StableDiffusionXLControlNetInpaintPipeline |       |       |    🤷     |     🤷      |
 
 
 
