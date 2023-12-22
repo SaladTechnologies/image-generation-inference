@@ -4,6 +4,7 @@ from PIL import Image
 import io
 import base64
 import time
+import json
 
 
 def b64_to_pil(image: str) -> Image.Image:
@@ -55,6 +56,7 @@ class IGITest(unittest.TestCase):
         if cls.checkpoint is None or cls.pipeline is None:
             print("Skipping test")
             return
+        print(f"\nTesting {cls.pipeline} with {cls.checkpoint}")
         loaded_checkpoints = requests.get(
             f"{cls.api_url}/checkpoints?loaded=true"
         ).json()
@@ -84,3 +86,10 @@ class IGITest(unittest.TestCase):
             self.assertEqual(img.size, size)
         self.assertEqual(img.mode, "RGB")
         self.assertTrue(img.getbbox())
+
+    def assertPostSuccessful(self, payload: dict) -> dict:
+        response = requests.post(self.url, json=payload)
+        self.assertEqual(
+            response.status_code, 200, json.dumps(response.json(), indent=2)
+        )
+        return response.json()
