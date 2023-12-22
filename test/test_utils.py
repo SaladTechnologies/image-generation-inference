@@ -50,6 +50,7 @@ class IGITest(unittest.TestCase):
     api_url = "http://localhost:1234"
     checkpoint = None
     pipeline = None
+    control_model = None
 
     @classmethod
     def setUpClass(cls):

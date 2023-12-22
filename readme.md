@@ -23,28 +23,28 @@ Additionally:
 python -m unittest discover -s test
 ```
 
-## Supported Pipelines
+## Support
 
-### StableDiffusionPipeline
+- ✅ = Supported, with tests
+- 🤷 = Expected to work, but not tested yet
 
-### StableDiffusionImg2ImgPipeline
+| Pipeline                                   | SD1.5 | SD2.1 | SDXL  | SDXL Turbo |
+| ------------------------------------------ | :---: | :---: | :---: | :--------: |
+| StableDiffusionPipeline                    |   ✅   |   ✅   |       |            |
+| StableDiffusionImg2ImgPipeline             |   ✅   |   ✅   |       |            |
+| StableDiffusionInpaintPipeline             |   ✅   |   ✅   |       |            |
+| StableDiffusionControlNetPipeline          |   ✅   |       |       |            |
+| StableDiffusionControlNetImg2ImgPipeline   |   🤷   |       |       |            |
+| StableDiffusionControlNetInpaintPipeline   |   🤷   |       |       |            |
+| StableDiffusionXLPipeline                  |       |       |   ✅   |     ✅      |
+| StableDiffusionXLImg2ImgPipeline           |       |       |   ✅   |     ✅      |
+| StableDiffusionXLInpaintPipeline           |       |       |   ✅   |     ✅      |
+| StableDiffusionXLControlNetPipeline        |       |       |   🤷   |     🤷      |
+| StableDiffusionXLControlNetImg2ImgPipeline |       |       |   🤷   |     🤷      |
+| StableDiffusionXLControlNetInpaintPipeline |       |       |   🤷   |     🤷      |
 
-### StableDiffusionInpaintPipeline
 
-### StableDiffusionControlNetPipeline
 
-### StableDiffusionXLPipeline
-
-### StableDiffusionXLImg2ImgPipeline
-
-### StableDiffusionXLInpaintPipeline
-
-## Supported Model Types
-
-- SD1.5
-- SD2.1
-- SDXL 1.0
-- SDXL Turbo
 
 ## Webhooks
 

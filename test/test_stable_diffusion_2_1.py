@@ -8,6 +8,9 @@ with open("test/cat.png", "rb") as f:
 with open("test/mask.jpg", "rb") as f:
     mask = base64.b64encode(f.read()).decode()
 
+with open("test/qr.png", "rb") as f:
+    qr = base64.b64encode(f.read()).decode()
+
 
 class StableDiffusionPipelineTest(IGITest):
     checkpoint = "stickerArt_sticker.safetensors"
