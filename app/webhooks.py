@@ -15,8 +15,11 @@ async def post_webhook(url, data):
             }
             # Include the UTC time as a datetime string
             data["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            headers = {}
+            if config.webhook_auth["header"] and config.webhook_auth["value"]:
+                headers[config.webhook_auth["header"]] = config.webhook_auth["value"]
             async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=data) as response:
+                async with session.post(url, json=data, headers=headers) as response:
                     response.raise_for_status()
                     logging.info(f"Webhook triggered successfully at {url}.")
         except aiohttp.ClientError as e:

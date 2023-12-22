@@ -120,6 +120,8 @@ IGI emits webhooks for various events. The webhook URLs can be configured via en
 | `LAUNCH_CHECKPOINT`        | `None`               | Path to a specific checkpoint to launch.                              |
 | `LAUNCH_VAE`               | `None`               | Path to a specific VAE to launch.                                     |
 | `IMAGE_STORAGE_STRATEGY`   | `disk`               | Strategy for storing images (e.g., 'disk', 'post').                   |
+| `WEBHOOK_AUTH_HEADER`      | `None`               | Authorization header for webhooks.                                    |
+| `WEBHOOK_AUTH_VALUE`       | `None`               | Value for the authorization header for webhooks.                      |
 | `WEBHOOK_MODEL_LOADED`     | `None`               | Webhook URL for model loaded event.                                   |
 | `WEBHOOK_MODEL_UNLOADED`   | `None`               | Webhook URL for model unloaded event.                                 |
 | `WEBHOOK_IMAGE_STORED`     | `None`               | Webhook URL for image stored event.                                   |

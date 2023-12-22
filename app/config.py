@@ -46,6 +46,11 @@ launch_vae = os.getenv("LAUNCH_VAE", None)
 
 image_storage_strategy = os.getenv("IMAGE_STORAGE_STRATEGY", "disk").lower()
 
+webhook_auth = {
+    "header": os.getenv("WEBHOOK_AUTH_HEADER", None),
+    "value": os.getenv("WEBHOOK_AUTH_VALUE", None),
+}
+
 webhooks = {
     "model.loaded": os.getenv("WEBHOOK_MODEL_LOADED", None),
     "model.unloaded": os.getenv("WEBHOOK_MODEL_UNLOADED", None),
