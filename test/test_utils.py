@@ -29,13 +29,15 @@ def restart_server():
             "http://localhost:1234/restart",
             headers={"Content-Type": "application/json"},
         )
-    except requests.HTTPError:
+    except:
         pass
+    time.sleep(0.2)
 
     # Poll /hc every .1 seconds until it returns 200
     while True:
         try:
-            requests.get("http://localhost:1234/hc")
+            response = requests.get("http://localhost:1234/hc")
+            response.raise_for_status()
         except:
             time.sleep(0.1)
             continue
@@ -56,7 +58,9 @@ class IGITest(unittest.TestCase):
         loaded_checkpoints = requests.get(
             f"{cls.api_url}/checkpoints?loaded=true"
         ).json()
-        if cls.checkpoint not in loaded_checkpoints or len(loaded_checkpoints) > 1:
+        if (
+            len(loaded_checkpoints) > 0 and cls.checkpoint not in loaded_checkpoints
+        ) or len(loaded_checkpoints) > 1:
             print(f"Unloading checkpoints {loaded_checkpoints}")
             restart_server()
         elif len(loaded_checkpoints) == 1 and loaded_checkpoints[0] == cls.checkpoint:
