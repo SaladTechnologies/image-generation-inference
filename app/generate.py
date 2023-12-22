@@ -112,6 +112,10 @@ def prepare_parameters(
         b64_decode = time.perf_counter()
         gen_params["control_image"] = prepare_image_field(gen_params["control_image"])
         img_decode_time += time.perf_counter() - b64_decode
+    if "image" in gen_params and "control_image" in gen_params:
+        gen_params["control_image"] = gen_params["control_image"].resize(
+            gen_params["image"].size
+        )
 
     if (
         refiner_params is not None

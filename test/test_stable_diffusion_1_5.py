@@ -345,7 +345,7 @@ class StableDiffusionControlNetPipelineTest(IGITest):
 
     def test_batch_1_a1111_safe(self):
         """
-        Test stable diffusion controlnet pipeline with a 2.1 finetune, batch size 1,
+        Test stable diffusion controlnet pipeline with a 1.5 finetune, batch size 1,
         a1111 scheduler alias, safety checker
         """
 
@@ -371,7 +371,7 @@ class StableDiffusionControlNetPipelineTest(IGITest):
 
     def test_batch_1_a1111_unsafe(self):
         """
-        Test stable diffusion controlnet pipeline with a 2.1 finetune, batch size 1,
+        Test stable diffusion controlnet pipeline with a 1.5 finetune, batch size 1,
         a1111 scheduler alias, no safety checker
         """
 
@@ -399,7 +399,7 @@ class StableDiffusionControlNetPipelineTest(IGITest):
 
     def test_batch_1_scheduler(self):
         """
-        Test stable diffusion controlnet pipeline with a 2.1 finetune, batch size 1,
+        Test stable diffusion controlnet pipeline with a 1.5 finetune, batch size 1,
         euler scheduler, no a1111 alias
         """
 
@@ -426,7 +426,7 @@ class StableDiffusionControlNetPipelineTest(IGITest):
 
     def test_batch_2_scheduler(self):
         """
-        Test stable diffusion controlnet pipeline with a 2.1 finetune, batch size 2,
+        Test stable diffusion controlnet pipeline with a 1.5 finetune, batch size 2,
         euler scheduler, no a1111 alias
         """
 
@@ -439,6 +439,127 @@ class StableDiffusionControlNetPipelineTest(IGITest):
                 "num_inference_steps": 20,
                 "num_images_per_prompt": 2,
                 "image": qr,
+                "width": 512,
+                "height": 512,
+            },
+            "return_images": True,
+        }
+        response_body = self.assertPostSuccessful(payload)
+
+        # body.images should have length 1
+        self.assertEqual(len(response_body["images"]), 2)
+
+        # body.images[0] should be a base64 encoded image
+        self.assertIsImage(response_body["images"][0], (512, 512))
+        self.assertIsImage(response_body["images"][1], (512, 512))
+
+
+class StableDiffusionControlNetImg2ImgPipelineTest(IGITest):
+    checkpoint = "dreamshaper_8.safetensors"
+    pipeline = "StableDiffusionControlNetImg2ImgPipeline"
+    control_model = "qrCodeMonster_v20.safetensors"
+    url = f"{IGITest.api_url}/generate/{pipeline}"
+
+    def test_batch_1_a1111_safe(self):
+        """
+        Test stable diffusion controlnet img2img pipeline with a 1.5 finetune, batch size 1,
+        a1111 scheduler alias, safety checker
+        """
+
+        payload = {
+            "checkpoint": self.checkpoint,
+            "control_model": self.control_model,
+            "a1111_scheduler": "Euler a",
+            "safety_checker": True,
+            "parameters": {
+                "prompt": "delicate lace sticker, vector art",
+                "num_inference_steps": 20,
+                "image": cat,
+                "control_image": qr,
+            },
+            "return_images": True,
+        }
+        response_body = self.assertPostSuccessful(payload)
+
+        # body.images should have length 1
+        self.assertEqual(len(response_body["images"]), 1)
+
+        # body.images[0] should be a base64 encoded image
+        self.assertIsImage(response_body["images"][0], (512, 512))
+
+    def test_batch_1_a1111_unsafe(self):
+        """
+        Test stable diffusion controlnet img2img pipeline with a 1.5 finetune, batch size 1,
+        a1111 scheduler alias, no safety checker
+        """
+
+        payload = {
+            "checkpoint": self.checkpoint,
+            "control_model": self.control_model,
+            "a1111_scheduler": "Euler a",
+            "safety_checker": False,
+            "parameters": {
+                "prompt": "delicate lace sticker, vector art",
+                "num_inference_steps": 20,
+                "image": cat,
+                "control_image": qr,
+                "width": 512,
+                "height": 512,
+            },
+            "return_images": True,
+        }
+        response_body = self.assertPostSuccessful(payload)
+
+        # body.images should have length 1
+        self.assertEqual(len(response_body["images"]), 1)
+
+        # body.images[0] should be a base64 encoded image
+        self.assertIsImage(response_body["images"][0], (512, 512))
+
+    def test_batch_1_scheduler(self):
+        """
+        Test stable diffusion controlnet img2img pipeline with a 1.5 finetune, batch size 1,
+        euler scheduler, no a1111 alias
+        """
+
+        payload = {
+            "checkpoint": self.checkpoint,
+            "control_model": self.control_model,
+            "scheduler": "EulerDiscreteScheduler",
+            "parameters": {
+                "prompt": "delicate lace sticker, vector art",
+                "num_inference_steps": 20,
+                "image": cat,
+                "control_image": qr,
+                "width": 512,
+                "height": 512,
+            },
+            "return_images": True,
+        }
+        response_body = self.assertPostSuccessful(payload)
+
+        # body.images should have length 1
+        self.assertEqual(len(response_body["images"]), 1)
+
+        # body.images[0] should be a base64 encoded image
+        self.assertIsImage(response_body["images"][0], (512, 512))
+
+    def test_batch_2_scheduler(self):
+        """
+        Test stable diffusion controlnet img2img pipeline with a 1.5 finetune, batch size 2,
+        euler scheduler, no a1111 alias
+        """
+
+        payload = {
+            "checkpoint": self.checkpoint,
+            "control_model": self.control_model,
+            "scheduler": "EulerDiscreteScheduler",
+            "parameters": {
+                "prompt": "delicate lace sticker, vector art",
+                "num_inference_steps": 20,
+                "num_images_per_prompt": 2,
+                "image": cat,
+                "control_image": qr,
                 "width": 512,
                 "height": 512,
             },

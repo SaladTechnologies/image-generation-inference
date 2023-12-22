@@ -34,7 +34,7 @@ python -m unittest discover -s test
 | StableDiffusionImg2ImgPipeline             |   ✅   |   ✅   |          |            |
 | StableDiffusionInpaintPipeline             |   ✅   |   ✅   |          |            |
 | StableDiffusionControlNetPipeline          |   ✅   |       |          |            |
-| StableDiffusionControlNetImg2ImgPipeline   |   🤷   |       |          |            |
+| StableDiffusionControlNetImg2ImgPipeline   |   ✅   |       |          |            |
 | StableDiffusionControlNetInpaintPipeline   |   🤷   |       |          |            |
 | StableDiffusionXLPipeline                  |       |       |    ✅     |     ✅      |
 | StableDiffusionXLImg2ImgPipeline           |       |       |    ✅     |     ✅      |

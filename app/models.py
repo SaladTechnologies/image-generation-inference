@@ -15,6 +15,7 @@ import logging
 import webhooks
 import asyncio
 import threading
+import inspect
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
@@ -234,6 +235,8 @@ class ModelManager:
             pipe_kwargs = {**self.__pipes__[self.default_pipeline].components}
             if control_model is not None:
                 pipe_kwargs["controlnet"] = get_controlnet(control_model)
+            expected_kwargs = inspect.signature(PipeClass.__init__).parameters.keys()
+            pipe_kwargs = {k: v for k, v in pipe_kwargs.items() if k in expected_kwargs}
             pipe = PipeClass(**pipe_kwargs)
             self.__pipes__[pipeline_type] = pipe
         return self.__pipes__[pipeline_type]
