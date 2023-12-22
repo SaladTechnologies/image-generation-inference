@@ -118,7 +118,7 @@ IGI emits webhooks for various events. The webhook URLs can be configured via en
 | `PORT`                     | `1234`               | The port number for the service.                                      |
 | `LAUNCH_CHECKPOINT`        | `None`               | Path to a specific checkpoint to launch.                              |
 | `LAUNCH_VAE`               | `None`               | Path to a specific VAE to launch.                                     |
-| `IMAGE_STORAGE_STRATEGY`   | `disk`               | Strategy for storing images (e.g., 'disk', 'post').                   |
+| `IMAGE_STORAGE_STRATEGY`   | `disk`               | Strategy for storing images (e.g., 'disk', 'http-post').              |
 | `WEBHOOK_AUTH_HEADER`      | `None`               | Authorization header for webhooks.                                    |
 | `WEBHOOK_AUTH_VALUE`       | `None`               | Value for the authorization header for webhooks.                      |
 | `WEBHOOK_MODEL_LOADED`     | `None`               | Webhook URL for model loaded event.                                   |
@@ -143,7 +143,7 @@ The disk storage strategy stores images on disk. This is the default strategy. I
 }
 ```
 
-#### Post
+#### HTTP Post
 
 The post storage strategy sends images to the `WEBHOOK_IMAGE_STORED` webhook URL via POST. Images will only be stored when a generation request includes `{"store_images": true}`. The `image.stored` event will be sent to the `WEBHOOK_IMAGE_STORED` webhook URL via POST, with a payload of the form:
 
