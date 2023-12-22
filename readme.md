@@ -45,8 +45,6 @@ python -m unittest discover -s test
 | StableDiffusionXLControlNetInpaintPipeline |       |       |    🤷     |     🤷      |
 
 
-
-
 ## Webhooks
 
 IGI emits webhooks for various events. The webhook URLs can be configured via environment variables. All webhooks include the following fields:
