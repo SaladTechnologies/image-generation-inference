@@ -49,7 +49,6 @@ image_storage_strategy = os.getenv("IMAGE_STORAGE_STRATEGY", "disk").lower()
 webhooks = {
     "model.loaded": os.getenv("WEBHOOK_MODEL_LOADED", None),
     "model.unloaded": os.getenv("WEBHOOK_MODEL_UNLOADED", None),
-    "image.generated": os.getenv("WEBHOOK_IMAGE_GENERATED", None),
     "image.stored": os.getenv("WEBHOOK_IMAGE_STORED", None),
 }
 

@@ -23,7 +23,7 @@ Additionally:
 python -m unittest discover -s test
 ```
 
-## Support
+## Current Support
 
 - ✅ = Supported, with tests
 - 🤷 = Expected to work, but not tested yet
@@ -122,7 +122,6 @@ IGI emits webhooks for various events. The webhook URLs can be configured via en
 | `IMAGE_STORAGE_STRATEGY`   | `disk`               | Strategy for storing images (e.g., 'disk', 'post').                   |
 | `WEBHOOK_MODEL_LOADED`     | `None`               | Webhook URL for model loaded event.                                   |
 | `WEBHOOK_MODEL_UNLOADED`   | `None`               | Webhook URL for model unloaded event.                                 |
-| `WEBHOOK_IMAGE_GENERATED`  | `None`               | Webhook URL for image generated event.                                |
 | `WEBHOOK_IMAGE_STORED`     | `None`               | Webhook URL for image stored event.                                   |
 | `SALAD_MACHINE_ID`         | `None`               | Identifier for the Salad machine.                                     |
 | `SALAD_CONTAINER_GROUP_ID` | `None`               | Identifier for the Salad container group.                             |

@@ -37,13 +37,6 @@ async def model_unloaded(data):
     await post_webhook(config.webhooks["model.unloaded"], data)
 
 
-async def image_generated(data):
-    """Function to handle 'image generated' event."""
-    logging.debug("Handling image generated event...")
-    data["event"] = "image.generated"
-    await post_webhook(config.webhooks["image.generated"], data)
-
-
 async def image_stored(data):
     """Function to handle 'image stored' event."""
     logging.debug("Handling image stored event...")
