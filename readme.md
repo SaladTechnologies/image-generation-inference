@@ -2,7 +2,7 @@
 
 🚧 This is under active development. Don't use it in production! 🚧
 
-This is a minimalist image generation inference server wrapping Diffusers and stable-fast.
+This is a minimalist image generation inference server wrapping Diffusers and stable-fast. For the most part, the API maps 1-1 to the Diffusers API, with some predictable exceptions. Images are submitted as base64-encoded strings, and returned as base64-encoded strings. The `generator` parameter accepted by most pipelines is replaced with `seed`, a number used to create a deterministic torch generator internally.
 
 API docs at `/docs`
 
