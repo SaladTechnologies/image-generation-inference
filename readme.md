@@ -20,7 +20,7 @@ Additionally:
 ## Tests
 
 ```bash
-python -m unittest discover -s tests
+python -m unittest discover -s test
 ```
 
 ## Supported Pipelines

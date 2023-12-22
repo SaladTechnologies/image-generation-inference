@@ -88,6 +88,7 @@ class IGITest(unittest.TestCase):
         self.assertTrue(img.getbbox())
 
     def assertPostSuccessful(self, payload: dict) -> dict:
+        payload["store_images"] = True
         response = requests.post(self.url, json=payload)
         self.assertEqual(
             response.status_code, 200, json.dumps(response.json(), indent=2)
