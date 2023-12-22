@@ -16,6 +16,7 @@ Additionally:
 - Lora-per-request
 - Controlnet-per-request
 - vae swapping
+- prompt weighting with compel
 
 ## Tests
 
