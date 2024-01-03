@@ -22,7 +22,7 @@ def get_pipes(
     pipeline: PipelineOptions,
     vae: str = None,
     control_model: str = None,
-    refiner: str = None,
+    refiner_model: str = None,
     scheduler: str = None,
     a1111_scheduler: str = None,
     safety_checker: bool = False,
@@ -40,10 +40,10 @@ def get_pipes(
             status_code=500,
             headers={"Content-Type": "application/json"},
         )
-    if refiner is not None:
+    if refiner_model is not None:
         try:
-            refiner = get_checkpoint(refiner, refiner_for=checkpoint)
-            refiner_pipe = refiner.get_pipeline()
+            refiner_model = get_checkpoint(refiner_model, is_refiner=True)
+            refiner_pipe = refiner_model.get_pipeline()
         except Exception as e:
             logging.exception(e)
             raise HTTPException(

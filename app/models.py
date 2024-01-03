@@ -16,6 +16,7 @@ import webhooks
 import asyncio
 import threading
 import inspect
+from PIL import Image
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
@@ -39,6 +40,10 @@ loaded_vae = {}
 loaded_lora = {}
 loaded_controlnet = {}
 
+warmup_image_path = os.path.join(os.path.dirname(__file__), "cat.png")
+with open(warmup_image_path, "rb") as f:
+    warmup_image = Image.open(f).convert("RGB")
+
 
 def run_asyncio_coroutine(coroutine):
     def run():
@@ -52,7 +57,7 @@ def run_asyncio_coroutine(coroutine):
 
 
 def load_checkpoint(
-    model_name: str, vae: str = None, refiner_for: str = None
+    model_name: str, vae: str = None, is_refiner: bool = False
 ) -> diffusers.DiffusionPipeline:
     """_summary_
 
@@ -64,12 +69,12 @@ def load_checkpoint(
     """
     logging.info("Loading Checkpoint: %s", model_name)
     model_kwargs = {
-        "torch_dtype": torch.float16,
+        "torch_dtype": torch.bfloat16,
         "low_cpu_mem_usage": True,
         "extract_ema": True,
         "load_safety_checker": config.load_safety_checker,
         "use_safetensors": True,
-        "vae": None,
+        # "vae": None,
     }
     if torch.cuda.is_available():
         model_kwargs["device"] = "cuda"
@@ -86,12 +91,7 @@ def load_checkpoint(
         model_kwargs["vae"] = loaded_vae[vae]
         logging.info("Using loaded VAE %s for %s", vae, model_name)
 
-    if refiner_for is not None and refiner_for not in loaded_checkpoints:
-        raise Exception(f"Unknown base model {refiner_for}")
-    elif refiner_for is not None:
-        base = loaded_checkpoints[refiner_for].get_pipeline()
-        model_kwargs["text_encoder_2"] = base.text_encoder_2
-        model_kwargs["vae"] = base.vae
+    if is_refiner:
         model_kwargs["variant"] = "fp16"
 
     # if the model_name looks like org/repo, then we assume it's a HuggingFace model
@@ -154,9 +154,10 @@ class ModelManager:
     __feature_extractor__ = None
     __vae_name__ = None
 
-    def __init__(self, model_name: str, vae: str = None, refiner_for: str = None):
+    def __init__(self, model_name: str, vae: str = None, is_refiner: bool = False):
         self.model_name = model_name
-        pipe = load_checkpoint(model_name, vae=vae, refiner_for=refiner_for)
+        pipe = load_checkpoint(model_name, vae=vae, is_refiner=is_refiner)
+        self.is_refiner = is_refiner
         pipe_type = pipe.__class__.__name__
         self.default_pipeline = pipe_type
         self.__vae_name__ = vae
@@ -187,6 +188,8 @@ class ModelManager:
             text_encoders.append(pipe.text_encoder_2)
         if hasattr(pipe, "vae") and pipe.vae is not None:
             pipe.vae.eval()
+        if hasattr(pipe, "image_processor") and pipe.image_processor is not None:
+            pipe.image_processor.eval()
 
         pipe = compile(pipe, compile_config)
         end = time.perf_counter()
@@ -211,8 +214,15 @@ class ModelManager:
         self.compel = Compel(**compel_kwargs)
         logging.info("Warming up %s", model_name)
         start = time.perf_counter()
+        warmup_params = {
+            "prompt": "Leafy Green Salad",
+            "num_inference_steps": 1,
+        }
+        expected_kwargs = inspect.signature(pipe.__class__.__call__).parameters.keys()
+        if "image" in expected_kwargs:
+            warmup_params["image"] = warmup_image
         for _ in range(2):
-            pipe(prompt="Leafy Green Salad", num_inference_steps=1)
+            pipe(**warmup_params)
         end = time.perf_counter()
         logging.info("Warmed up %s in %.2fs", model_name, end - start)
         self.__pipes__[pipe_type] = pipe
@@ -357,7 +367,7 @@ class ModelManager:
 
 
 def get_checkpoint(
-    model_name: str, vae: str = None, refiner_for: str = None
+    model_name: str, vae: str = None, is_refiner: bool = False
 ) -> ModelManager:
     """_summary_
 
@@ -369,7 +379,7 @@ def get_checkpoint(
     """
     if model_name not in loaded_checkpoints:
         loaded_checkpoints[model_name] = ModelManager(
-            model_name, vae=vae, refiner_for=refiner_for
+            model_name, vae=vae, is_refiner=is_refiner
         )
 
     model = loaded_checkpoints[model_name]

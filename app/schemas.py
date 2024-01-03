@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, Extra, Field, create_model
 from typing import Optional, Union
 from enum import Enum
 import config
@@ -322,6 +322,15 @@ class StableDiffusionXLImg2ImgPipelineParams(BaseSDXLParams, ImageInputs):
     clip_skip: Optional[int] = clip_skip_field
 
 
+OptionalStableDiffusionXLImg2ImgPipelineParams = create_model(
+    "OptionalStableDiffusionXLImg2ImgPipelineParams",
+    **{
+        name: (Optional[type_], None)
+        for name, type_ in StableDiffusionXLImg2ImgPipelineParams.__annotations__.items()
+    }
+)
+
+
 class StableDiffusionXLInpaintPipelineParams(
     BaseSDXLParams, ImageInputs, InputDimensions
 ):
@@ -447,39 +456,39 @@ class GenerateStableDiffusionControlNetInpaintRequest(BaseGenerateRequest):
 
 class GenerateStableDiffusionXLRequest(BaseGenerateRequest):
     parameters: StableDiffusionXLPipelineParams
-    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_parameters: Optional[OptionalStableDiffusionXLImg2ImgPipelineParams] = None
     refiner_model: Optional[str] = None
 
 
 class GenerateStableDiffusionXLImg2ImgRequest(BaseGenerateRequest):
     parameters: StableDiffusionXLImg2ImgPipelineParams
-    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_parameters: Optional[OptionalStableDiffusionXLImg2ImgPipelineParams] = None
     refiner_model: Optional[str] = None
 
 
 class GenerateStableDiffusionXLInpaintRequest(BaseGenerateRequest):
     parameters: StableDiffusionXLInpaintPipelineParams
-    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_parameters: Optional[OptionalStableDiffusionXLImg2ImgPipelineParams] = None
     refiner_model: Optional[str] = None
 
 
 class GenerateStableDiffusionXLControlNetRequest(BaseGenerateRequest):
     parameters: StableDiffusionXLControlNetPipelineParams
-    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_parameters: Optional[OptionalStableDiffusionXLImg2ImgPipelineParams] = None
     refiner_model: Optional[str] = None
     control_model: Optional[Union[str, list[str]]] = None
 
 
 class GenerateStableDiffusionXLControlNetImg2ImgRequest(BaseGenerateRequest):
     parameters: StableDiffusionXLControlNetImg2ImgPipelineParams
-    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_parameters: Optional[OptionalStableDiffusionXLImg2ImgPipelineParams] = None
     refiner_model: Optional[str] = None
     control_model: Optional[Union[str, list[str]]] = None
 
 
 class GenerateStableDiffusionXLControlNetInpaintRequest(BaseGenerateRequest):
     parameters: StableDiffusionXLControlNetInpaintPipelineParams
-    refiner_parameters: Optional[StableDiffusionXLImg2ImgPipelineParams] = None
+    refiner_parameters: Optional[OptionalStableDiffusionXLImg2ImgPipelineParams] = None
     refiner_model: Optional[str] = None
     control_model: Optional[Union[str, list[str]]] = None
 
