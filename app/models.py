@@ -188,9 +188,7 @@ class ModelManager:
             text_encoders.append(pipe.text_encoder_2)
         if hasattr(pipe, "vae") and pipe.vae is not None:
             pipe.vae.eval()
-        if hasattr(pipe, "image_processor") and pipe.image_processor is not None:
-            pipe.image_processor.eval()
-
+        
         pipe = compile(pipe, compile_config)
         end = time.perf_counter()
         if vae is None and "default_vae" not in loaded_vae:
