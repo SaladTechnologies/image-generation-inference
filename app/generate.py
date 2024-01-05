@@ -127,10 +127,18 @@ def prepare_parameters(
 
     # Refiner values should default to the original generation parameters
     if refiner_params is not None:
+        model_fields = [
+            k
+            for k in list(StableDiffusionXLImg2ImgPipelineParams.model_fields.keys())
+            if k != "denoising_end"
+        ]
         refiner_params = refiner_params.model_dump()
-        for k, v in refiner_params.items():
-            if v is None and k in gen_params:
-                refiner_params[k] = gen_params[k]
+        # Iterate through all field names on the pydantic class
+        for field in model_fields:
+            if (
+                field not in refiner_params or refiner_params[field] is None
+            ) and field in gen_params:
+                refiner_params[field] = gen_params[field]
 
         refiner_params = {k: v for k, v in refiner_params.items() if v is not None}
 

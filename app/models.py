@@ -69,7 +69,7 @@ def load_checkpoint(
     """
     logging.info("Loading Checkpoint: %s", model_name)
     model_kwargs = {
-        "torch_dtype": torch.bfloat16,
+        "torch_dtype": torch.float16,
         "low_cpu_mem_usage": True,
         "extract_ema": True,
         "load_safety_checker": config.load_safety_checker,
@@ -169,33 +169,34 @@ class ModelManager:
         pipe.to("cuda")
         end = time.perf_counter()
         logging.info("Moved %s to GPU in %.2fs", model_name, end - start)
-        logging.info("Compiling %s", model_name)
         tokenizers = []
         text_encoders = []
         if hasattr(pipe, "tokenizer") and pipe.tokenizer is not None:
             tokenizers.append(pipe.tokenizer)
         if hasattr(pipe, "tokenizer_2") and pipe.tokenizer_2 is not None:
             tokenizers.append(pipe.tokenizer_2)
-        start = time.perf_counter()
-
-        if hasattr(pipe, "unet") and pipe.unet is not None:
-            pipe.unet.eval()
         if hasattr(pipe, "text_encoder") and pipe.text_encoder is not None:
-            pipe.text_encoder.eval()
             text_encoders.append(pipe.text_encoder)
         if hasattr(pipe, "text_encoder_2") and pipe.text_encoder_2 is not None:
-            pipe.text_encoder_2.eval()
             text_encoders.append(pipe.text_encoder_2)
-        if hasattr(pipe, "vae") and pipe.vae is not None:
-            pipe.vae.eval()
-        
-        pipe = compile(pipe, compile_config)
-        end = time.perf_counter()
         if vae is None and "default_vae" not in loaded_vae:
             loaded_vae["default_vae"] = pipe.vae
         elif vae is not None and vae not in loaded_vae:
             loaded_vae[vae] = pipe.vae
-        logging.info("Compiled %s in %.2fs", model_name, end - start)
+        if config.compile_model:
+            logging.info("Compiling %s", model_name)
+            start = time.perf_counter()
+            if hasattr(pipe, "unet") and pipe.unet is not None:
+                pipe.unet.eval()
+            if hasattr(pipe, "text_encoder") and pipe.text_encoder is not None:
+                pipe.text_encoder.eval()
+            if hasattr(pipe, "text_encoder_2") and pipe.text_encoder_2 is not None:
+                pipe.text_encoder_2.eval()
+            if hasattr(pipe, "vae") and pipe.vae is not None:
+                pipe.vae.eval()
+            pipe = compile(pipe, compile_config)
+            end = time.perf_counter()
+            logging.info("Compiled %s in %.2fs", model_name, end - start)
         compel_kwargs = {}
         if len(tokenizers) == 1:
             compel_kwargs["tokenizer"] = tokenizers[0]
@@ -219,7 +220,10 @@ class ModelManager:
         expected_kwargs = inspect.signature(pipe.__class__.__call__).parameters.keys()
         if "image" in expected_kwargs:
             warmup_params["image"] = warmup_image
-        for _ in range(2):
+            warmup_params["num_inference_steps"] = 5
+            logging.info("Warming up with image")
+        for i in range(2):
+            logging.info("Warmup #%d", i)
             pipe(**warmup_params)
         end = time.perf_counter()
         logging.info("Warmed up %s in %.2fs", model_name, end - start)
@@ -422,11 +426,12 @@ def get_controlnet(model_name: str) -> diffusers.ControlNetModel:
         controlnet.to("cuda")
         end = time.perf_counter()
         logging.info("Moved %s to GPU in %.2fs", model_name, end - start)
-        logging.info("Compiling %s", model_name)
-        start = time.perf_counter()
-        controlnet = compile_unet(controlnet, compile_config)
-        end = time.perf_counter()
-        logging.info("Compiled %s in %.2fs", model_name, end - start)
+        if config.compile_model:
+            logging.info("Compiling %s", model_name)
+            start = time.perf_counter()
+            controlnet = compile_unet(controlnet, compile_config)
+            end = time.perf_counter()
+            logging.info("Compiled %s in %.2fs", model_name, end - start)
         loaded_controlnet[model_name] = controlnet
         run_asyncio_coroutine(webhooks.model_loaded({"controlnet": model_name}))
 

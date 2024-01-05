@@ -1,13 +1,16 @@
 from test_utils import IGITest
 import base64
+import os
 
-with open("test/cat.png", "rb") as f:
+current_path = os.path.dirname(os.path.realpath(__file__))
+
+with open(os.path.join(current_path, "cat.png"), "rb") as f:
     cat = base64.b64encode(f.read()).decode()
 
-with open("test/mask.jpg", "rb") as f:
+with open(os.path.join(current_path, "mask.jpg"), "rb") as f:
     mask = base64.b64encode(f.read()).decode()
 
-with open("test/qr.png", "rb") as f:
+with open(os.path.join(current_path, "qr.png"), "rb") as f:
     qr = base64.b64encode(f.read()).decode()
 
 

@@ -65,3 +65,5 @@ identity = {
 
 
 max_data_dir_size_gb = int(os.getenv("MAX_DATA_DIR_SIZE_GB", "0"))
+
+compile_model = os.getenv("COMPILE_MODEL", "true").lower() == "true"
