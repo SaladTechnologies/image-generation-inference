@@ -1,5 +1,14 @@
 from test_utils import IGITest
 import base64
+import os
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+
+with open(os.path.join(current_path, "cat.png"), "rb") as f:
+    cat = base64.b64encode(f.read()).decode()
+
+with open(os.path.join(current_path, "mask.jpg"), "rb") as f:
+    mask = base64.b64encode(f.read()).decode()
 
 
 class StableDiffusionXLPipelineTest(IGITest):
@@ -129,3 +138,32 @@ class StableDiffusionXLPipelineTest(IGITest):
         # body.images should have length 1
         self.assertEqual(len(response_body["images"]), 1)
         self.assertIsImage(response_body["images"][0], (512, 768))
+
+
+class StableDiffusionXLImg2ImgPipelineTest(IGITest):
+    pipeline = "StableDiffusionXLImg2ImgPipeline"
+    checkpoint = "rundiffusionXL_beta.safetensors"
+    url = f"{IGITest.api_url}/generate/{pipeline}"
+
+    def test_batch_1_a1111(self):
+        """
+        Test Stable Diffusion XL Img2Img Pipeline with a SDXL1.0 finetune, batch size 1,
+        a1111 scheduler alias, no refiner
+        """
+
+        payload = {
+            "checkpoint": self.checkpoint,
+            "a1111_scheduler": "DPM++ SDE Karras",
+            "parameters": {
+                "prompt": "a housecat, believing itself to be a tiger in the jungle",
+                "num_inference_steps": 35,
+                "guidance_scale": 7.0,
+                "image": cat,
+            },
+            "return_images": True,
+        }
+        response_body = self.assertPostSuccessful(payload)
+
+        # body.images should have length 1
+        self.assertEqual(len(response_body["images"]), 1)
+        self.assertIsImage(response_body["images"][0], (512, 512))

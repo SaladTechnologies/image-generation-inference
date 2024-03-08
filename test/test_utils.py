@@ -63,7 +63,7 @@ class IGITest(unittest.TestCase):
         ).json()
         if (
             len(loaded_checkpoints) > 0 and cls.checkpoint not in loaded_checkpoints
-        ) or len(loaded_checkpoints) > 1:
+        ) or len(loaded_checkpoints) > 2:
             print(f"Unloading checkpoints {loaded_checkpoints}")
             restart_server()
         elif len(loaded_checkpoints) == 1 and loaded_checkpoints[0] == cls.checkpoint:

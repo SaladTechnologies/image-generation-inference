@@ -24,7 +24,8 @@ logging.info("Torch version: %s", config.package_versions["torch"])
 logging.info("XFormers version: %s", config.package_versions["xformers"])
 logging.info("Triton version: %s", config.package_versions["triton"])
 logging.info("Diffusers version: %s", config.package_versions["diffusers"])
-logging.info("Transformers version: %s", config.package_versions["transformers"])
+logging.info("Transformers version: %s",
+             config.package_versions["transformers"])
 logging.info("CUDA Version: %s", config.package_versions["cuda"])
 logging.info("Stable Fast version: %s", config.package_versions["stable_fast"])
 
@@ -100,7 +101,12 @@ def load_checkpoint(
     if "/" in model_name and not model_name.endswith(".safetensors"):
         model_info = huggingface_hub.model_info(model_name)
         if "diffusers" in model_info.config:
-            default_pipeline = model_info.config["diffusers"]["class_name"]
+            class_key = "class_name" if "class_name" in model_info.config[
+                "diffusers"] else "_class_name"
+            if class_key not in model_info.config["diffusers"]:
+                print(model_info.config["diffusers"])
+                raise Exception(f"Unable to find config for {model_name}")
+            default_pipeline = model_info.config["diffusers"][class_key]
         else:
             raise Exception(f"Unable to find config for {model_name}")
         PipeClass = getattr(diffusers, default_pipeline)
@@ -115,7 +121,8 @@ def load_checkpoint(
         pipe = PipeClass.from_single_file(model_path, **model_kwargs)
     end = time.perf_counter()
     model_class = pipe.__class__.__name__
-    logging.info("Loaded %s with %s in %.2fs", model_class, model_name, end - start)
+    logging.info("Loaded %s with %s in %.2fs",
+                 model_class, model_name, end - start)
     return pipe
 
 
@@ -217,7 +224,8 @@ class ModelManager:
             "prompt": "Leafy Green Salad",
             "num_inference_steps": 1,
         }
-        expected_kwargs = inspect.signature(pipe.__class__.__call__).parameters.keys()
+        expected_kwargs = inspect.signature(
+            pipe.__class__.__call__).parameters.keys()
         if "image" in expected_kwargs:
             warmup_params["image"] = warmup_image
             warmup_params["num_inference_steps"] = 5
@@ -228,7 +236,8 @@ class ModelManager:
         end = time.perf_counter()
         logging.info("Warmed up %s in %.2fs", model_name, end - start)
         self.__pipes__[pipe_type] = pipe
-        run_asyncio_coroutine(webhooks.model_loaded({"checkpoint": model_name}))
+        run_asyncio_coroutine(
+            webhooks.model_loaded({"checkpoint": model_name}))
 
     def get_safety_checker(self):
         return self.__safety_checker__
@@ -247,8 +256,10 @@ class ModelManager:
             pipe_kwargs = {**self.__pipes__[self.default_pipeline].components}
             if control_model is not None:
                 pipe_kwargs["controlnet"] = get_controlnet(control_model)
-            expected_kwargs = inspect.signature(PipeClass.__init__).parameters.keys()
-            pipe_kwargs = {k: v for k, v in pipe_kwargs.items() if k in expected_kwargs}
+            expected_kwargs = inspect.signature(
+                PipeClass.__init__).parameters.keys()
+            pipe_kwargs = {k: v for k, v in pipe_kwargs.items()
+                           if k in expected_kwargs}
             pipe = PipeClass(**pipe_kwargs)
             self.__pipes__[pipeline_type] = pipe
         return self.__pipes__[pipeline_type]
@@ -433,6 +444,7 @@ def get_controlnet(model_name: str) -> diffusers.ControlNetModel:
             end = time.perf_counter()
             logging.info("Compiled %s in %.2fs", model_name, end - start)
         loaded_controlnet[model_name] = controlnet
-        run_asyncio_coroutine(webhooks.model_loaded({"controlnet": model_name}))
+        run_asyncio_coroutine(
+            webhooks.model_loaded({"controlnet": model_name}))
 
     return loaded_controlnet[model_name]

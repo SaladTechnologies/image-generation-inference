@@ -1,14 +1,14 @@
-diffusers @ git+https://github.com/huggingface/diffusers.git@v0.25.0
-transformers @ git+https://github.com/huggingface/transformers.git@v4.36.2
-accelerate @ git+https://github.com/huggingface/accelerate.git@v0.25.0
-peft @ git+https://github.com/huggingface/peft@v0.7.1
+diffusers @ git+https://github.com/huggingface/diffusers.git@v0.26.3
+transformers @ git+https://github.com/huggingface/transformers.git@v4.38.2
+accelerate @ git+https://github.com/huggingface/accelerate.git@v0.27.0
+peft @ git+https://github.com/huggingface/peft@v0.9.0
 numpy
 torchsde
 torchvision
 ninja
 safetensors
 Pillow
-xformers
+xformers==0.0.24
 triton
 bitsandbytes
 omegaconf

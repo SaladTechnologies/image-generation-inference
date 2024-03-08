@@ -229,16 +229,20 @@ class ControlNetInputs(BaseModel):
 
 class BaseSDXLParams(BaseStableDiffusionParams):
     prompt_2: Optional[Union[str, list[str]]] = prompt_2_field
-    negative_prompt_2: Optional[Union[str, list[str]]] = negative_prompt_2_field
+    negative_prompt_2: Optional[Union[str,
+                                      list[str]]] = negative_prompt_2_field
     denoising_end: Optional[float] = denoising_end_field
     original_size: Optional[tuple[int, int]] = original_size_field
-    crops_coords_top_left: Optional[tuple[int, int]] = crops_coords_top_left_field
+    crops_coords_top_left: Optional[tuple[int,
+                                          int]] = crops_coords_top_left_field
     target_size: Optional[tuple[int, int]] = target_size_field
-    negative_original_size: Optional[tuple[int, int]] = negative_original_size_field
+    negative_original_size: Optional[tuple[int,
+                                           int]] = negative_original_size_field
     negative_crops_coords_top_left: Optional[
         tuple[int, int]
     ] = negative_crops_coords_top_left_field
-    negative_target_size: Optional[tuple[int, int]] = negative_target_size_field
+    negative_target_size: Optional[tuple[int, int]
+                                   ] = negative_target_size_field
     guidance_rescale: Optional[float] = guidance_rescale_field
 
 
